@@ -1,0 +1,170 @@
+
+\chapter{State of the art}
+\section{Introduction}
+\label{sec:intro}
+
+A large number of researchers have proposed various approaches, intending
+to solving TCP problems relative to the response times of small TCP flows.
+Most solutions to this problem can be grouped into either router-centric,
+or end-host-based solutions which include mostly TCP variants and changing
+IW. The router-centric solutions include priority-scheduling algorithms and
+buffer management policies to give priority to small flows both in time and
+space, respectively. We brief them below. 
+
+\section{Priority Scheduling}	
+
+\emph{Size-based scheduling} is a type of priority scheduling that gives
+priority to packets of flows, based on flow-size. The
+shortest-remaining-processing-time (SRPT) scheduler serves the flow that
+needs the shortest remaining service time, and needs the prior knowledge of
+flow-size~\cite{Schrage1968}. Among all scheduling policies, it is optimal
+with respect to the mean response time. This scheduler has been used
+effectively in web servers. 
+	 
+\emph{LAS} (Least Attained Service) scheduling, as a good approximation of
+SRPT used for packet-scheduling, is optimal with respect to mean response
+times of small flows among all work conserving disciplines under decreasing
+hazard rate of service time distributions~\cite{Rai2005}. It is a
+non-anticipating policy, as it uses `ongoing size' of a flow for taking
+scheduling decisions, serving the packet of that flow which received least
+amount of service until then.
+	 
+\emph{PS+PS} scheduling uses two PS (processor sharing) queues with
+priority between the queues~\cite{Avrachenkovt2004}. Any flow with
+flow-size greater than a (pre-defined) threshold gets served in
+high-priority queue and the remaining packets of the flow in low-priority
+queue. The low-priority queue is served only when high-priority queue is
+empty. Depending on the value of the threshold, the overall mean response
+time can be close to minimum response time achieved using LAS, while being
+less unfair to large flows.  
+	 
+\emph{SIFT}~\cite{sift} and threshold-based-sampling-cum-scheduling
+policy~\cite{DivakaranCAP10} are practical approaches to size-based
+scheduling, where packet-sampling is used to identify and detect large
+flows probabilistically. \emph{Spike-detection} method is another way of
+detecting and \emph{de-prioitizing} large flows without the need to track
+all flows, for improving the response times of small flows as well as the
+response times of those flows which do not overload the high-priority
+queue~\cite{divakaran-asmta-11}.
+
+All the above are router-centric solutions, requiring modifications at
+the router at the minimum. On the other hand, most
+TCP-based approaches are end-host-based solutions.
+
+\section{TCP Variants}
+
+T/TCP is a transaction transport protocol in which the sender starts
+transmitting data packet along with the first segment (SYN
+packet)~\cite{Braden:1994:TTE:RFC1644}. TCP Accelerated Open (TAO) of T/TCP
+bypasses the \emph{3-way handshaking}; and thus, T/TCP saves response times
+of transactional services like RPC (remote procedure call).  T/TCP does not
+support multicasting. 
+ 
+To minimize the number of packet-loss during start-up period, authors 
+of~\cite{Hoe:1996:ISB:248157.248180} used bandwidth-delay product
+to estimate initial \emph{ssthresh}. They calculated the RTT using the SYN
+packet, and used the least-square method to calculate the available
+bandwidth. The {\it ssthresh}  is set to the product of available bandwidth
+and RTT, which improves the TCP performance during start-up period.
+  
+Quick-Start TCP~\cite{Scharf2007} is a TCP extension that determines the
+`initial throughput' for TCP flows, co-operating with the routers on the
+network path. It significantly improves the transfer time, without requiring
+the per-flow state information in the router. The analytical analysis and
+simulation results showed that, the improvement in transfer time for
+medium-size flows increases as the network delay increases. But
+\emph{Quick-Start TCP} mechanism requires support on all routers along the
+network path.
+
+TCP/SPAND is a TCP extension in which the network performance
+information is shared among the users to estimate each connection's fair
+share of network resources~\cite{Zhang00speedingup}.  The performance
+gateway estimates the network performance informations by monitoring all
+the traffic entering and leaving a network. As the throughput during
+slow-start phase is small, the TCP sender can avoid slow-start phase and
+enter congestion-avoidance phase. This can be achieved by setting
+initial \emph{ssthresh} to be no more than IW.  Authors
+of~\cite{Zhang00speedingup} came with the results that determines the
+\emph{optimal IW} for a TCP flow based on flow-size and network
+performance informations. Through simulations, it is shown that the
+TCP/SPAND has a greater improvement on response times of small flows
+rather than large flow by avoiding slow-start penalty.
+
+Authors of~\cite{Ciullo} proposed two schemes for reducing the latency of
+small flows. The TCP connection suffers a large-delay, when the last
+segment is lost and for which, the lost segment is transmitted after
+expiration of RTO. Both schemes are based on either by transmitting twice
+of last segment or by receiving the duplicate ACK, caused by delivery of
+the FIN segment.
+
+TCP over GPRS shows poor performance in terms of network characteristics
+like underutilization of link for small flows, excess queueing-delay for
+large flows, poor loss recovery, unfairness between competing flows.
+Authors of~\cite{1435513} proposed a design and implementation of
+transparent TCP proxy which aggregates the connections destined for same
+host, due to their statistical dependances. Thus, it improves the link
+utilization of wireless links.  
+
+A new slow-start algorithm for TCP connections called B-TCP was proposed in
+order to reduce response times and packet losses of small
+flows~\cite{b-tcp}. The intuitive idea in B-TCP is, the congestion window
+growth scheme is inversely proportional to the window size such that small
+flows transfer more data within few RTTs using B-TCP rather than standard
+TCP.
+
+Most of the TCP Variants discussed above try to either improve the initial
+throughput, or minimize the number of packet-loss, getting the
+feed-backs about the network resources to improve the performance of small
+flows during slow-start phase. Some TCP Variants avoid slow-start algorithm
+as a small throughput is achieved during slow-start phase.  
+
+\section{Changing IW}	
+ 
+To improve the response time of TCP flows, an earlier research work,
+in~\cite{Poduri98simulationstudies}, was proposed for increasing IW-size
+from one segment to three or four segments. Authors
+of~\cite{Poduri98simulationstudies} considered both long-lived (file transfer)
+and short-lived (web-browsing) TCP connections and simulated in ns-2
+simulator. For performance evaluation, the metrics like goodput, median
+delay, network power, link utilization, and packet drop rate were
+considered in the simulation studies; however, in our work, we approach
+analytically (, and also through simulation studies) for improving response
+times of TCP flows -- most often, small flows -- based on IW parameter.  
+  
+Google proposed to increase the IW to at least $10$ segments, and they
+proposed for standardization by the IETF~\cite{increasing-IW-2010}.
+Through large-scale Internet experiments, they quantified the response
+times using a larger IW-size, that depends network bandwidth, round-trip time
+(RTT), bandwidth-delay product (BDP), and nature of the applications. The
+latency of flows even in a low-bandwidth network improved significantly
+with larger IW-size. On the negative, increasing IW also results in
+increased value of retransmission rate~\cite{increasing-IW-2010}.
+ 
+ Authors of~\cite{id-TCP-IW} presented the results from several large scale
+experiments studying the overall performance of web services with large IW.
+They observed that the IW-size of $10$ is not an `optimal' one, rather,
+IW-size of $16$ segments shows a better performance than IW-size of $10$
+with little negative impact.
+
+An IW algorithm was proposed for adjusting the IW of TCP connections over
+long timescale, based on the statistics of previous TCP
+connections~\cite{automate-TCP-IW}. The algorithm checks for IW losses only
+during the first slow-start phase of a connection. The IW is decreased (or
+increased) only when more (or less) than $95\%$ of connections have IW
+losses. The number of previous connections considered for updating IW, is
+quite large (more than $1000$).
+ 
+ An approach to set the IW-size for Fast Startup TCP algorithm was proposed
+to improve the initial throughput of TCP flows, using the bottleneck link
+and access link bandwidth, and the bottleneck router's buffer
+size~\cite{conf/iwqos/KodamaSI11}. They used the rate-based Pacing start
+method in the first RTT during slow-start phase.
+
+The different ways, discussed above for improving response times of TCP
+flows, are based on single value of IW-size for all flows, measured through
+large-scale Internet experiments, or simulations. 
+
+\section{Introduction to TCP}
+   \TODO{---}
+\section{Importance of IW-size}
+   \TODO{---}

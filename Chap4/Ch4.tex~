@@ -1,0 +1,1420 @@
+\graphicspath{{./fig/}}
+\chapter{Evolution of TCP's Initial Window Size}
+  \label{chap:evolution}
+
+\section{Introduction}
+
+  Our previous work was the initial study that focused on how a single
+IW-size for all flows affects various important metrics correlated to
+the performance of flows in a network, and in particular, on the small
+TCP flows~\cite{Barik2012}. We made two important
+observations: (i)~large IW-size has a negligible effect on the response
+times of large flows, and (ii),~a single constant value of IW-size for
+all flows improves performance with respect to some metrics (including
+the mean completion time), but it does so by affecting other metrics
+such as the number of time-outs and retransmission rate. Noting large
+IW-size of large flows being one of the causes for the degradation, we
+concluded that a single IW-size for all flows is not advisable. Given
+these observations, we focused on improving the response times of the
+large number of small flows in a network, and came up with a function
+that sets the IW-size of a flow based on its size. However, the proposed
+function depends on a number of dependent parameters, making it complex
+for analysis and deployment. 
+
+Currently the congestion window adapted by the standard TCP is independent
+of flow-size. However, authors of \cite{size-based}
+and~\cite{Zhang00speedingup} have proposed new versions of TCP called TCP
+Vienna and TCP/SPAND respectively, employing flow-size based congestion
+control to improve the response times of small flows. The motivation for
+TCP Vienna is to minimize the unfairness against the small flows; and
+hence, the authors adapt the TCP parameters as a function of flow-size.
+Similarly TCP/SPAND is an extension to standard TCP in which the protocol
+enters congestion avoidance phase by avoiding slow-start penalty. For the
+same, the initial {\em ssthresh} is set to IW-size; and the optimal value
+of IW-size depends on flow-size and network state informations.
+
+
+In this paper, we propose a simple but effective function, straightforward
+to implement, that determines the value of IW-size for each connection. The
+proposed IW function depends on the flow-size, and two other parameters:
+(i) a threshold distinguishing small flows from large flows, and (ii) the
+maximum IW-size of a connection, V. The decentralized nature of the
+Internet may enforce the users to strategically choose the right value for
+V for improving the performance of the flows. Note that the users compete
+for a better performance, and decisions made by a user can affect the
+performance of all other users. This leads to a {\em dynamic} scenario
+where users constantly interact and choose the right value for $V$ based on
+performance they obtain. Here we are interested on the equilibrium points
+of the dynamics.  From the game theory perspective, we find this as a
+strategic interaction among the flows in a large population of flows, for
+deciding the {\em best response} strategy for a given current population
+profile. 
+
+
+Our contributions in this work are the following. We propose a new function
+to set the IW-size of a flow, in the next section.  We proceed to perform
+two kinds of analyses. First, in Section~\ref{sec:egt}, we model the
+dynamic scenario of different users using different values for $V$, under
+the framework of evolutionary non-cooperative game, and study the existence
+and stability of the equilibrium points. Therein, we show that the game has
+a unique evolutionary stable strategy (ESS), revealing that, there exists
+an optimal value for $V$ for which small flows achieve better performance
+than with other values. Using our proposed model, we demonstrate
+numerically several interesting properties of the ESS under consideration
+of some relevant flow-size distributions. Second, through experiments on real
+testbed, described in Section~\ref{sec:expt}, we evaluate the performance
+of flows attained using the function for various values of $V$. We then
+compare the results with that attained when all flows use a constant
+IW-size (as proposed in other works until now). 
+
+
+
+
+\section{Initial Window (IW) as a function}
+\label{sec:iw_f}
+
+Intuitively, a function that determines IW-size of each flow based on its
+size can lead to better performance of small
+flows~\cite{Zhang00speedingup}. The key idea is, {\em larger the flow-size,
+smaller the IW-size}. A lower bound for such an IW function can be the
+current standard for IW-size. 
+
+We consider a weighted function for determining the IW-size (in number
+of TCP segments) of a flow (TCP connection). For a flow of size $s$
+packets\footnote{Strictly speaking, flow-sizes and IW-size at TCP layer
+are in segments, but we use the more general term, {\it packets}, at
+times.}, define the IW function,
+\begin{equation}
+   \label{eq:iw}
+   IW(s) = 
+   \left\{
+   \begin{array}{lr}
+   V & s\leq \theta \\
+   \lfloor\frac{\theta}{s}\times V + (1-\frac{\theta}{s}) \times
+   IW_{\min}\rfloor & s > \theta,
+   \end{array} 
+ \right.
+\end{equation}
+where $\theta$ is the flow-size threshold used to distinguish between
+large flows and the rest, $IW_{\min}$ is the lower bound (four segments,
+currently), and $V \ge IW_{\min}$ is the maximum IW-size that any
+connection can have. The parameters, $\theta$, $IW_{\min}$ and $V$ are
+in number of TCP segments.  Observe that, while small flows, defined by
+the threshold $\theta$, will have IW-sizes as large as $V$, flows with
+size greater than $\theta$ will have IW-sizes closer to $IW_{\min}$ with
+increasing size. 
+
+We make an important assumption that, flows will be able to know their
+sizes before the transfer begins. While this is true for many
+applications, for example, an HTTP query, a file transfer etc., there
+are also applications for which the flow-sizes can not be known in
+advance, for example, a streaming video. We assume the flows whose sizes
+can not be known in advance are usually large flows, and hence, the
+IW-size of such flows can be set to $IW_{\min}$. Besides, we view this
+function as an incentive for small flows (basically the applications
+generating small flows) to reveal their sizes. In future, we plan to
+work on explicit cases involving a mix of flows that know their sizes
+(in advance) and those that do not. 
+
+The next question is, {\it what is the right value for $V$?}'.  Users
+(systems) using different values of $V$ can face different performance
+based on the dynamic interaction of flows from different users.  In the
+next section, through game-theoretic analysis, we study on how the
+different values of $V$ affect the performance of small flows.
+
+\section{Evolutionary Game-Theoretic Analysis}
+\label{sec:egt}
+
+
+This section analyzes the evolution of the populations using various values
+for $V$ (the maximum IW-size of a connection) in time. First we formulate
+the utility function (in Sec.~\ref{sec:uf}), then solve for the equilibrium
+points using {\em replicator dynamics} (in Sec.~\ref{sec:rd}). We find a
+unique ESS where the evolution stabilizes (in Sec.~\ref{sec:euess}), and study
+the effects of a weighted parameter ($\lambda$) in the utility function on
+ESS (in Sec.~\ref{sec:eless}). We finally analyze with some specific values
+for $V$ like $4$, $10$, $16$, $32$, and $64$ to study on how the nature of
+$V$ affects the performance of small flows.
+
+
+Large flows in the Internet usually form the background traffic, consuming
+a large part of link capacity; we assume them to be stationary. Hence, the
+focus in this section is only on small flows. We can also safely assume
+that small flows complete in slow-start phase in case of no packet losses.
+Further assumptions made are:
+
+\begin{enumerate}
+\item Flows with sizes less than $\theta$ follow bounded Exponential
+distribution with mean set to $\mu$ segments~\cite{mice-model}. The probability that a flow
+has size $s$ is given by,
+\begin{equation}
+\label{eq:bexp}
+p(s)=\frac{\frac{1}{\mu}e^{-\frac{1}{\mu}s}}{e^{-\frac{1}{\mu}}-e^{-\frac{1}{\mu}\theta}}, 1 \le s \le \theta,
+\end{equation}
+where $\sum_{s=1}^{\theta}{p(s)}=1$. 
+
+\item For simplicity, we assume that the round trip time $RTT$ is same for
+all flows sharing a single bottleneck link. This causes the losses to be
+synchronized in case there is packet loss. As a result, the flows reduce
+their congestion windows ({\em cwnd}) at around the same time. We discuss
+more in Section~\ref{sec:uf}. 
+
+\item The slow-start threshold is set to a large value so that the
+bottleneck for a flow is only the network and not the end-host.
+Furthermore, only packet loss can cause window halving.
+
+\end{enumerate}
+
+\subsection{Utility Function}
+\label{sec:uf}
+
+Ideally, during slow-start phase, a flow with a large value of $V$ requires
+fewer RTTs to complete transfer than with a small value.  However, due to a
+large value of $V$, the flow increases the {\em cwnd}, and attains a large
+value before detecting a packet loss. This increase in {\em cwnd} increases
+the probability of causing or facing packet losses.  Let $d$ denote the
+number of RTTs that a flow takes before losing a segment; and $L$ the
+probability that the resultant congestion window $l$ causes or faces packet
+losses. Hence, a right value for $V$ tries to reduce both $d$ and $L$. A
+value of $V$ decided by a flow may affect the performance of all other
+flows. Hence, we normalize $d$ and it is denoted by $D$. As a flow does not
+know the sizes of other flows coming across the network, we calculate the
+above parameters for a flow of any size from the given flow-size
+distribution (defined in Eq.~\ref{eq:bexp}). In the following, first we
+derive the two parameters ($L$ and $D$), and then define the utility
+function.
+  
+Let $q$ denote the packet-loss probability. Then the expected number of
+segments sent before losing a segment during slow-start phase
+$E[\mathbb{S}]$ for the flow with size $s$ can be written
+as~\cite{cardwell},
+\begin{equation}
+ {E[\mathbb{S}]}_{s}=\frac{(1-{(1-q)}^{s})(1-q)}{q}. 
+\end{equation}
+
+Let the $V$ be set to $\hat{V}$; i.e., a flow starts with IW-size as
+$\hat{V}$ (see Eq.~\ref{eq:iw}). The number of RTTs required to send
+${E[\mathbb{S}]}_{s}$ segments can be approximated to
+${E[\mathbb{T}]}_{s}= \log_2{(\frac{{E[\mathbb{S}]}_{s}}{\hat{V}}+1)}$.
+So, for the given flow-size distribution, the expected number of RTTs
+is given by, 
+\begin{equation}
+  d=\sum_{s=1}^{\theta}{{E[\mathbb{T}]}_{s} \times p(s)}.
+\end{equation} 
+
+Similarly, the expected {\em cwnd} of the flow that will cause or face a
+loss during slow-start phase can be written as,
+\begin{equation}
+   \label{eq:cwnd}
+   E[\mathbb{W}]_{s} = 
+   \left\{
+   \begin{array}{lr}
+    \frac{{E[\mathbb{S}]}_{s}+\hat{V}}{2} & s > \hat{V} \\
+     s & s \leq \hat{V}.
+   \end{array} 
+ \right.
+\end{equation}
+
+The expected congestion window $l$ of a flow with certain flow-size from
+the given distribution can be depicted as,
+
+\begin{equation}
+l=\sum_{s=1}^{\theta}{{E[\mathbb{W}]}_{s} \times p(s)}.
+\end{equation}
+
+
+Let $S:=\{ S_i | i \in N\}$ denote the strategy set, where $N$ is the
+number of different values of the parameter $V$.
+%can take in the IW function (Eq.~\ref{eq:iw}).
+Denote by 
+$x(t)=\{(x_1(t),...,x_N(t))|x_i(t) \ge 0, \sum_{i=1}^{N}{x_i(t)}=1\}$ 
+the population profile or the state space, where $x_i(t)$ is the fraction
+of the population using strategy $S_i$ at time $t$.
+
+For flows using strategy $S_i$, the corresponding number of RTTs is $d_i$.
+As we mentioned earlier that we normalize $d_i$ to $D_i$, we get,
+\begin{equation}
+{D}_i=\frac{x_i \times {d}_i}{\sum_j^N{x_j \times {d}_j}}.
+\end{equation}
+
+In the same way, the probability that the {\em cwnd} of a flow of certain
+size from the distribution will cause or face a loss during slow-start
+phase is given by,
+\begin{equation}
+{L}_i=\frac{x_i \times {l}_i }{ \sum_j^N{x_j \times {l}_j}}.
+\end{equation}
+
+
+Finally, The utility (pay-off) function for a flow of unknown size from
+the given flow-size distributions is given below as,
+\begin{equation}
+ \pi(S_i,x)= {D}_i + \lambda \times {L}_i,
+\end{equation}
+where $\lambda$, the weighted parameter between $D$ and $L$ for strategy
+$S_i$, ($\in [0,1]$).  We discuss more on $\lambda$ in
+Section~\ref{sec:eless}.
+
+Let $\sigma$ be a strategy profile, which generates a population profile
+$x$. Then the average pay-off of the population is given below,
+\begin{equation}
+ \overline{\pi}(\sigma,x)=\sum_{j=1}^N{x_j{\pi(S_j,x)}}.
+\end{equation}
+
+We use $\overline{\pi}$ in the rest of the paper to refer to
+$\overline{\pi}(\sigma,x)$.
+
+\subsection{Evolutionary Stable Strategy and Replicator Dynamics}
+\label{sec:rd}
+
+ Evolutionary Stable Strategies (ESS) are the equilibrium strategies which
+eliminate the existence of a small fraction of population that use an
+alternative strategy. This happens when the small fraction of population
+tries to invade others that use ESS. The ESS in our model shows which
+value(s) for $V$ can co-exist, and give better performance, and hence, our
+main intention is to find the ESS in the game. We use the one among famous
+population dynamics known as the {\em replicator dynamics}. It is a
+mathematical formulation of the dynamics of fraction of the population
+using various strategies in time. More formally, the rate of change of
+fraction of population using a strategy (say) $i$ is proportional to the
+difference between the average pay-off of the population and the pay-off of
+that strategy, or the other way round, depending on the nature of pay-off
+value. In our model, smaller the pay-off value by using a strategy, higher
+is the preference for using that strategy. Hence, the replicator dynamic
+equation is given by,
+
+     \begin{equation}
+      \label{eq:replicator}
+       \dot{x_i}(t)=x_i(t)[\overline{\pi}-\pi{(S_i,x)}],
+      \end{equation}
+ where $\dot{x_i}(t)$ denotes the derivative of $x_i(t)$.
+
+
+In our study, we consider only two strategies. So, we set $N$ to $2$.
+$S:=\{ S_1, S_2\}$ is the strategy set. Let $x(t)=\{(x_1, 1-x_1)|x_1 \in [0,
+1]\}$ be the population profile.  Eq.\ref{eq:replicator} can be written
+as,
+
+\begin{equation}
+\label{eq:rd}
+     \dot{x}_1 = x_1(1-x_1) \times \nonumber
+\end{equation}
+\begin{equation}
+\label{eq:rd1}
+ \biggl ( \frac{d_2-x_1(d_1+d_2)}{d_2 + x_1(d_1-d_2)} + \lambda
+     \times \frac{l_2-x_1(l_1+l_2)}{l_2+x_1(l_1-l_2)}\biggr),
+\end{equation}
+
+where  ${d}_i$ and ${l}_i$ correspond to strategy $S_i$. 
+
+
+The fixed points (or equilibrium points) of the replicator dynamics can be
+obtained by satisfying $\dot{x}_i=0$. At the equilibrium, the dynamics
+of the fraction of population using the strategies stop evolving. Mathematically,
+
+\vspace{0.3cm}
+\begin{tabular}{lll}
+         & $\dot{x}_1=0$ &\\
+        $ \implies$ &  $x_1(1-x_1) \biggl ( \frac{d_2-x_1(d_1+d_2)}{d_2 + x_1(d_1-d_2)} +
+        \lambda \times \frac{l_2-x_1(l_1+l_2)}{l_2+x_1(l_1-l_2)}\biggr) =0
+\nonumber $ \\
+        $  \implies$ & $x_1=0, 1-x_1=0,$ \\ \nonumber
+       
+\end{tabular}
+\vspace{-0.2cm}
+\begin{equation} 
+        \label{eq:quad}
+         \biggl ( \frac{d_2-x_1(d_1+d_2)}{d_2 + x_1(d_1-d_2)} + \lambda \times
+\frac{d_2-x_1(d_1+d_2)}{d_2+x_1(d_1-d_2)}\biggr)=0. 
+\end{equation}
+
+\vspace{0.2cm}
+Eq.~\ref{eq:quad} can be reduced to $2^{nd}$ degree polynomial, and can be
+written as,
+\vspace{-0.1cm}
+\begin{equation*}
+({\eta}_3+{\eta}_4 \lambda)x_1^2 + ((1+\lambda){\eta}_2 +
+(1-\lambda){\eta}_1)x_1 - \frac{(1+\lambda)}{2}{\eta}_2 = 0, 
+\end{equation*}
+where 
+\vspace{-0.2cm} 
+\begin{align*}
+&{\eta}_1= (d_1l_2-d_2l_1), {\eta}_2=2d_2l_2, \nonumber \\
+&{\eta}_3= (d_1+d_2)(l_1-l_2), {\eta}_4 = (d_1-d_2)(l_1+l_2). \nonumber \\
+\end{align*}
+
+%\vspace{-0.2cm}
+ After solving the equations, the equilibrium points of the replicator
+dynamic equation, corresponding to the fraction of population $x_1(t)$ with
+strategy $S_1$ are given below,
+
+%\vspace{-0.2cm}
+\begin{align*}
+&x_1^*=0, \nonumber \\
+&x_2^*=1, \nonumber \\
+&x_3^*=- \frac{1}{2}\biggl ( \frac{(1-\lambda){\eta}_1+ 
+          (1+\lambda){\eta}_2+\sqrt{{(1-\lambda)}^2{\eta}_5+16\lambda {\eta}_6 }}{{\eta}_3+{\eta}_4\lambda} \biggr ), \nonumber \\
+&x_4^*=- \frac{1}{2}\biggl ( \frac{(1-\lambda){\eta}_1+ 
+         (1+\lambda){\eta}_2-\sqrt{{(1-\lambda)}^2{\eta}_5+16\lambda {\eta}_6 }}{{\eta}_3+{\eta}_4\lambda} \biggr ), \nonumber
+\end{align*}
+where ${\eta}_5= {(d_1l_2+d_2l_1)}^2, {\eta}_6= d_1d_2l_1l_2$.
+
+\subsection{Existence and Uniqueness of the ESS}
+\label{sec:euess}
+
+We can find the ESS using two steps. The first one is $\dot{x}=0$ and the
+second one is to satisfy the stability conditions of the equilibrium
+points. More specifically, a strategy to be an ESS should satisfy the
+following theorem:
+
+\begin{thm}
+A strategy is an {\em ESS} if and only if the corresponding fixed point in
+the replicator dynamic is the asymptotically stable~\cite{RePEc}. 
+\end{thm}
+
+A fixed point of the replicator dynamics is said to be {\em asymptotically stable}
+if any small deviation from that state are eliminated by the dynamics as t
+approaches to $\infty$. In the following, we find the ESS for the game.
+
+\subsubsection*{\underline{$x_1^*=0$}} 
+ 
+Let $x_1=x_1^* + \epsilon$. 
+
+By taking derivative, we can write,
+$\dot{x}_1=\dot{\epsilon}$, where $\epsilon > 0$ to ensure $x_1 > 0$.
+Substituting $\dot{x}_1$ and $x_1$ in Eq.~\ref{eq:rd}, we get,
+\vspace{0.2cm}
+\begin{align*}
+\dot{\epsilon} = \epsilon (1- \epsilon) \biggl (
+\frac{d_2-\epsilon(d_1+d_2)}{d_2+\epsilon(d_1-d_2)} + \lambda \times
+\frac{l_2-\epsilon(l_1+l_2)}{l_2+\epsilon(l_1-l_2)}.
+\end{align*}
+
+%\vspace{0.2cm}
+By applying linearization, the above can reduced to intermediate form
+as,
+\begin{align*}
+\dot{\epsilon}=\frac{d_2\epsilon}{d_2+\epsilon d_1} + \frac{\lambda
+l_2\epsilon}{\epsilon l_1 + l_2}.
+\end{align*}
+
+\vspace{0.1cm}
+It can be further reduced to the following,
+\begin{align}
+\label{eq:rd0}
+&\dot{\epsilon}= \frac{(1+\lambda)\epsilon d_2 l_2}{d_2 l_2 + \epsilon (d_2
+l_1 + d_1 l_2)} \nonumber \\
+\implies & log(\epsilon) + K_1 (\epsilon) = (1+\lambda) t + K_2,
+\end{align}
+where $K_1=\frac{d_2 l_1 + d_1 l_2}{d_2 l_2}$ and $K_2$ is a constant.
+
+\vspace{0.2cm}
+Eq.~\ref{eq:rd0} shows when $t \to \infty$, $\epsilon \to \infty$
+rather than approaching to $0$. Hence $x_1^*=0$ is not {\em asymptotically
+stable} and $(0,1)$ is not an {\em ESS}.
+
+\vspace{0.54cm}
+\subsubsection*{\underline{$x_2^*=1$}}
+Let $x_1=x_2^*-\epsilon$. 
+
+By taking derivation on both side w.r.t. time, we
+can write $\dot{x}_1=-\dot{\epsilon}$, where $\epsilon > 0$ to ensure $x_1<1$.
+
+%\vspace{0.2cm}
+By substituting the $\dot{x}_1$ and $x_1$ in Eq.~\ref{eq:rd}, and applying
+linearization, we can write,
+\begin{align}
+\label{eq:rd1}
+\dot{\epsilon}= \frac{(1+\lambda)\epsilon d_1 l_1}{d_1 l_1 - \epsilon (d_2
+l_1 + d_1 l_2- 2d_1l_1)} \nonumber \\
+\implies log(\epsilon) - K (\epsilon) = (1+\lambda) t + K^{'},
+\end{align}
+where $K=\frac{l_2}{l_1} + \frac{d_2}{d_1} -2$ and $K^{'}$ is a constant.
+That is, as $t \to \infty$, $\epsilon$ does not approach
+$0$. Hence $x_2^*=1$ is not {\em asymptotically stable}, and $(1,0)$ is also
+not an {\em ESS}.
+
+ 
+ In the above, we see that both $(0, 1)$ and $(1, 0)$ are not $ESS$ in the
+game. This shows that a larger value of $V$ may not be a dominant strategy. 
+
+
+\vspace{0.3cm}
+
+\subsubsection*{\underline{$x_3^*$, $x_4^*$}}
+
+Due to the numerical complexities, we study the stability conditions of
+the equilibrium points ($x_3^*$ and $x_4^*$) related to specific scenarios.
+
+\begin{figure}[H]
+          \centering
+          \resizebox{95mm}{!}{\includegraphics{lambda_infs.pdf}}
+          \captionof{figure}{Infeasible equilibrium point}
+         \label{fig:infs}
+  \end{figure}
+
+We set $S$ as $\{S_1=4, S_2=16\}$; $\theta=200$; $\mu=40$; $q=0.01$.
+Fig.~\ref{fig:infs} plots $x_3^*$ for a given value of $\lambda$. This
+shows that for all value of $\lambda$, $x_3^*$ is either more than $1$
+or less than $-1$. Hence, it is an infeasible equilibrium point, and not
+an {\em ESS}.
+
+\begin{figure}[hp]
+ 
+     \subfigure[x(0)=(0.97, 0.03)]{
+     %\begin{minipage}{0.5\linewidth}
+          \centering
+          \includegraphics[scale=0.40]{ESS_10_1.pdf}
+          %\caption{x(0)=(0.97, 0.03)}
+         \label{fig:ess101}}
+    % \end{minipage}
+        \hspace{-0.5cm}
+          %\vspace{-0.5cm}
+           \subfigure[x(0)=(0.5, 0.5)]{
+     %\begin{minipage}{0.5\linewidth}
+           \centering
+           \includegraphics[scale=0.40]{ESS_10_2.pdf}
+           %\caption{x(0)=(0.5, 0.5)}
+           \label{fig:ess102}}
+     %\end{minipage}
+     \hspace{-0.5cm}
+       \subfigure[x(0)=(0.1, 0.9)]{
+ % \begin{minipage}{0.5\linewidth}
+           \centering
+           \includegraphics[scale=0.40]{ESS_10_3.pdf}
+           %\caption{x(0)=(0.1, 0.9)}
+           \label{fig:ess103}
+        }
+        
+    % \end{minipage}
+   %\vspace{-0.5cm}
+   \label{fig:ess-1}
+%  \caption{Unique ESS with $S=\{ 4, 10 \}$}
+  \caption{ Existence of unique ESS with $S=\{ 4, 10 \}$ in \subref{fig:ess101},~\subref{fig:ess102}, 
+    and~\subref{fig:ess103}}
+ %\vspace{-0.5cm}
+  \end{figure}
+
+Here, $\lambda$ is set to $0.1$; $S=\{S_1=4, S_2 \}$ where $S_2=\{ 10, 16
+\}$; $\theta=200$; $\mu=40$; and $q=0.01$. The
+figures~\ref{fig:ess101},~\ref{fig:ess102} and~\ref{fig:ess103} plot the
+evolution of $x(t)$ over time with different initial population profiles
+for $S_2$ set to $10$.  These are $(0.97, 0.03)$, $(0.5, 0.5)$ and $(0.1,
+0.9)$ in respect to the above figures. These figures show that with the
+$x(0)$, the $x(t)$ converges to a specific value $(0.43, 0.57)$. The $(0,
+1)$ and $(1, 0)$ are the equilibrium points but not the {\em ESS}. So for
+any initial population profile other than $(0, 1)$ and $(1, 0)$, the $x(t)$
+converges to unique value. Hence, we can say, $x_4^*$ is the {\em ESS} in
+the game.  Similar plots are drawn with $S_2$ set to $16$, and shown
+in figures~\ref{fig:ess161},~\ref{fig:ess162}, and~\ref{fig:ess163}.
+
+\begin{figure}[hp]
+ 
+     \subfigure[x(0)=(0.97, 0.03)]{
+     %\begin{minipage}{0.5\linewidth}
+          \centering
+          \includegraphics[scale=0.40]{ESS_16_1.pdf}
+          %\caption{x(0)=(0.97, 0.03)}
+         \label{fig:ess161}}
+    % \end{minipage}
+   %\qquad
+          \hspace{-0.5cm}
+           \subfigure[x(0)=(0.5, 0.5)]{
+     %\begin{minipage}{0.5\linewidth}
+           \centering
+           \includegraphics[scale=0.40]{ESS_16_2.pdf}
+           %\caption{x(0)=(0.5, 0.5)}
+           \label{fig:ess162}}
+     %\end{minipage}
+         \hspace{-0.5cm}
+       \subfigure[x(0)=(0.1, 0.9)]{
+ % \begin{minipage}{0.5\linewidth}
+           \centering
+           \includegraphics[scale=0.40]{ESS_16_3.pdf}
+           %\caption{x(0)=(0.1, 0.9)}
+           \label{fig:ess163}}
+    % \end{minipage}
+  \label{fig:ess-2}
+  \caption{ Existence of unique ESS with $S=\{ 4, 16 \}$ in \subref{fig:ess161},~\subref{fig:ess162}, 
+             and~\subref{fig:ess163} }
+ %\vspace{-0.5cm}
+  \end{figure}
+
+
+\subsection{Effect of $\lambda$ on ESS}
+\label{sec:eless}
+
+
+Observe $x_4^*$; this is a function of $\lambda$---the weighted parameter
+between $D$ and $L$ in the utility function, and affects the performance of
+flows. Hence the value of $\lambda$ affects the position of ESS. When
+$\lambda$ is zero, the payoff value only depends on $D$ (the term
+representing an improvement in response time; smaller the value, larger is
+the improvement). Hence, the population drifts in the direction of a
+strategy that gives smaller value for $D$, and its corresponding population
+profile. Similarly, when $\lambda$ is one, the population drifts towards
+the population profile of a strategy that achieves smaller value to the sum
+of $D$ and $L$ (the probability that the resultant {\em cwnd} causes or
+faces packet losses).  Here, we set $S$ as $\{S_1=4, S_2=16 \}$;
+$\theta=200$; $\mu=40$; $q=0.01$.  Fig.~\ref{fig:ess} plots the fraction of
+flows using the strategy $S_1$ for a given value of $\lambda$. The figure
+shows that with increasing value of $\lambda$, the fraction of flows using
+$S_1$ increases. However, for all values of $\lambda$, between $0$ and $1$,
+the fraction of flows with strategy $S_2$ is higher than with $S_1$. In
+other words, flows with a larger value of $V$ can achieve better
+performance than with a small value.
+ \begin{figure}[h]
+   %\vspace{-0.2cm}
+   \centering
+   \resizebox{95mm}{!}{\includegraphics{lambda.pdf}}
+   \caption{$x_4^*$ vs $\lambda$}
+   \label{fig:ess}
+   %\vspace{-0.5cm}
+\end{figure}
+
+
+%\vspace{-0.2cm}
+\subsection{Numerical Analysis}
+\label{sec:na}
+
+In this section, our numerical analyses illustrate few properties of ESS
+under some relevant flow-size distributions, and also investigate choosing the
+right value(s) for $V$ (the maximum IW-size of a TCP flow) for which the
+flows in the Internet can achieve better performance. {\em The value for
+$V$ that increases the fraction of flows, using it in the population, is
+considered to give better performance}.  Currently, the TCP flows in the
+Internet use $V$ set to $4$ segments. We take different values of $V$, and
+compare their performance against $V$ set to $4$. Here we set $N$ to $2$;
+$q=0.01$; and $S=\{S_1=4, S_2\}$ where $S_2=\{10, 16, 32, 64\}$; $\lambda$
+is set to $1$; and initial population profile $(x_1(0),x_2(0))$ is set to
+$(0.97, 0.03)$.
+
+     \begin{figure}[H]
+           \centering
+           \resizebox{95mm}{!}{\includegraphics{ccdf.pdf}}
+           \caption{ccdf for CAIDA datasets}
+           \label{fig:ccdf}
+      \end{figure}
+
+
+
+We collected a packet trace from the CAIDA `equinix-sanjose' backbone
+link\footnote{The CAIDA UCSD Anonymized Internet Traces 2013 - 25 February
+2013 \\ http://www.caida.org/data/passive/passive\_2013\_dataset.xml} (1
+day in 2013) to know the flow-size distribution in the current Internet.
+Fig.~\ref{fig:ccdf} plots the complementary cumulative distribution
+function (ccdf) of nearly $3, 47, 204$ flows in CAIDA dataset, on a log-log
+scale. We found the mean flow-size as $\approx 40$ segments (here we
+assume one segment is of 1~KB). We then fitted a Lognormal distribution
+with the dataset, and found the {\em location parameter} and {\em scale
+parameter} as $-1$ and $3$ respectively. Observe that Lognormal
+distribution function fits better with the real dataset. Similarly, we plot
+ccdf for the Exponential distribution with a mean set to the mean flow-size
+of the dataset. Both the distribution functions are then truncated in our
+model.
+
+Fig.~\ref{fig:NaEd} plots the trajectories of the $x_2(t)$ (the fraction of
+population using the strategy $S_2$ at time $t$) using the strategy set
+$S$, as a function of time under bounded Exponential distribution, $p(s)$.
+Here we set $\theta=200$; and $\mu=40$. The figure shows that the $x_2(t)$
+for different values of $S_2$ as $(10, 16, 32, 64)$, converges to unique
+values as $(0.51, 0.55, 0.52, 0.50)$ respectively.  Observe that, $S_2=16$
+converges to a larger value compared to other values of $S_2$. A similar
+plot is shown in figure~\ref{fig:NaLd}, under bounded Lognormal
+distribution for flow-sizes.  It clearly shows that larger proportion of
+flows use $V$ set to $16$. Under both the distributions, we observe that
+small flows achieve better performance with $V$ set to $16$ segments.
+Hence, we can say that there exists an optimal value for $V$ for which
+small flows achieve better performance than with other values. 
+
+\begin{figure}[H]
+ %\subfigure[Retransmission Timeouts]{
+     \begin{minipage}{0.4\linewidth}
+          \centering
+          \resizebox{65mm}{!}{\includegraphics{Evo_game_per.pdf}}
+          \captionof{figure}{$x_2$(t) under Bounded Exponential distribution}
+         \label{fig:NaEd}
+     \end{minipage}
+   \qquad
+         % \hspace{0.1cm}
+           %\subfigure[Congestion Cuts]{
+     \begin{minipage}{0.5\linewidth}
+           \centering
+           \resizebox{65mm}{!}{\includegraphics{Evo_lognormal.pdf}}
+           \captionof{figure}{$x_2$(t) under Bounded Lognormal distribution} 
+          \label{fig:NaLd}
+     \end{minipage}
+   %\vspace{-0.5cm}
+  \end{figure}
+
+
+
+Fig.~\ref{fig:theta} plots the fraction of flows using different values
+of strategy $S_2$, $x_2$ (against the strategy $S_1=4$) for some specific
+values of $\theta$ where $\theta=(60, 100, 200, 500)$; $\mu=40$. As seen,
+for $\theta$ set to $60$, the value of $x_2$ for $S_2=\{ 10, 32, 64 \}$ is
+smaller than $0.5$. Here, it implies $V$ set to $4$ gives better
+performance to small flows. However, $x_2$ for $S_2=16$ is more than $0.5$,
+which shows $V=16$ gives better performance than $V$ set to $4$. Observe
+that, with increasing value of $\theta$, there is an increase in $x_2$,
+while the optimal value of $V$ remain unchanged.     
+
+
+\begin{figure}[H]
+ %\subfigure[Retransmission Timeouts]{
+     \begin{minipage}{0.4\linewidth}
+          \centering
+          \resizebox{65mm}{!}{\includegraphics{Theta.pdf}}
+          \captionof{figure}{$x_2$ vs. $\theta$}
+         \label{fig:theta}
+     \end{minipage}
+   \qquad
+         % \hspace{0.1cm}
+           %\subfigure[Congestion Cuts]{
+     \begin{minipage}{0.5\linewidth}
+           \centering
+           \resizebox{65mm}{!}{\includegraphics{Mu.pdf}}
+           \captionof{figure}{$x_2$ vs. mean flow-size $\mu$} 
+          \label{fig:mu}
+     \end{minipage}
+   %\vspace{-0.5cm}
+  \end{figure}
+
+Fig.~\ref{fig:mu} plots $x_2$ against different values of $\mu$ where
+$\mu=\{20, 40, 60, 80, 100, 120 \}$; $\theta=500$. See the figure; with
+$\mu$ set to $20$, $V=10$ is the optimal value. However, with $\mu$ set to
+$40$, the optimal value for $V$ is $16$. Observe, with $\mu$ set to a value
+between $60$ and $100$, $V=16$ shows lesser performance than $V=10$.  This
+is due to an increase in $L$ (the probability that the resultant {\em cwnd}
+causes or faces packet losses) rather than improvement in $D$ (the term
+representing an improvement in response time; smaller the value, larger is
+the improvement). However, with a larger $V$ value (say, $120$), $V=16$
+shows better performance than $V=10$. This is mainly due to an improvement
+in $D$. With value of $\mu$ between $60$ and $120$, the optimal value for
+$V$ is $32$. This shows that the optimal value for $V$ increases with
+increasing the mean flow-size $\mu$ of the distribution. This confirms,
+with larger mean flow-size in the Internet, we need a larger value for $V$.
+As the average web content transferred in the Internet per a single TCP
+connection increases, a larger value of $V$ can give better performance. 
+
+Using our proposed model, we observed the above properties of the ESS under
+some relevant flow-size distributions. In the next section, we evaluate the
+performance of the both small and large flows using various values for $V$
+in the IW function using experiments on a real testbed.
+
+
+\section{Simulation}
+\label{sec:simulation}
+
+This section evaluates the IW function using simulations in
+NS-2. First we list the metrics used for comparisons in our study, then
+describe the simulation topologies and settings of the simulations, and
+finally discuss on the performance of both small and large flows. 
+
+%\vspace{-0.4cm}
+\subsection{Metrics Considered}
+
+\begin{enumerate}
+
+  \item {\it Mean completion time} for small ($\overline{CT}_s$) and
+	large ($\overline{CT}_l$) flows, conditioned on flow-size. 
+
+  \item {\it Number of congestion-cuts} (number of times TCP's
+	congestion-window is reduced) for small (${CC}_s$) and all
+	(${CC}_a$) flows.
+
+  \item {\it Number of TCP retransmission time-outs} encountered by small
+	flows, ${RT}_s$.
+
+  \item {\it Retransmission rates} for small (${RR}_s$) and large
+	(${RR}_l$) flows, defined as the percentage of the number of
+	retransmitted packets to the actual number of packets transmitted,
+	for flows in the considered size-range. 
+
+  \item {\it Mean completion time} for range of flow-sizes.
+
+  \item {\it Network Power} for range of flows-sizes, defined as average
+	goodput---application-file-size/completion-time---divided by mean
+	completion time of flows in the considered size-range. This
+	definition is similar to the one in RFC 2415~\cite{rfc2415}.
+
+\end{enumerate}
+
+%\vspace{-0.4cm}
+%\vspace{-0.4cm}
+ 
+\subsection{Simulation Topology}
+\label{sec:settings}	 
+In our simulations, we use single-bottleneck topology to evaluate the
+performance of the IW function under different network load settings, and
+then more realistic multiple-bottleneck topology~\cite{citeulike:2271709} to
+study how it can perform in real-world scenarios. 
+
+The single-bottleneck topology is illustrated in Fig.~\ref{fig:topology}.
+The capacity $C$ of the bottleneck-link is 1~Gbps. There are 100
+source-destination node pairs, each end-node connects using a 100 Mbps
+link. The delays on the links are set such that base RTT (consisting of
+only propagation delay) is equal to 100~ms. The buffer-size of the
+bottleneck-link is set to bandwidth-delay-product (1~Gbps $\times$ 100~ms),
+with Drop-tail buffers at all nodes. Each simulation run generated $20,000$
+flows, with 200 flows between every source-destination pair.  Flow-sizes
+are generated from a mix of two distributions---15\% of flows are generated
+from Pareto distribution with shape $1.1$ and mean flow-size 1~MB, and
+remaining flows are from Exponential distribution with a mean flow-size of
+20~KB.  All flows are carried by TCP using the SACK version.  The
+packet-size is kept constant, equal to 1~KB.
+ 
+\begin{figure}[H]
+ %\subfigure[Retransmission Timeouts]{
+     \begin{minipage}{0.4\linewidth}
+          \centering
+          \resizebox{65mm}{!}{\includegraphics{bottleneck.pdf}}
+          \captionof{figure}{Single-Bottleneck Topology}
+         \label{fig:topology}
+     \end{minipage}
+   \qquad
+         % \hspace{0.1cm}
+           %\subfigure[Congestion Cuts]{
+     \begin{minipage}{0.5\linewidth}
+           \centering
+           \resizebox{65mm}{!}{\includegraphics{cdf.pdf}}
+           \captionof{figure}{CDF of total bytes} 
+          \label{fig:cdf}
+     \end{minipage}
+   %\vspace{-0.5cm}
+  \end{figure}
+
+The multiple-bottleneck topology is illustrated in Fig.~\ref{fig:mtopology}.
+In addition to multiple bottleneck links, this considers cross-traffic
+(both forward and reverse traffic) and different base RTTs between the
+source-destination node pairs. Each node connects to respective router
+with a $200$~Mbps link. The source nodes, with a total of $100$, connect to
+the router $R1$ with one-way link delays that vary uniformly between $5$
+and $30$~ms. However, the destination nodes connect to R3 or R5 with a
+constant delay set to $5$~ms. The delays on the links are set in such a way that the base
+RTT varies between $100$ and $200$~ms. The currently deployed industry recommendation for
+$\overline{RTT}$ is $250$~ms~\cite{Appenzeller}. The buffer-sizes at the routers for the links
+R1--R2, R2--R3 and R4--R5 are set to bandwidth-delay-product ({\em
+link-capacity} $\times \overline{RTT}$), with Drop-tail buffers at all
+nodes. The number of flows and the distributions used for generating them
+are kept same as that in the single-bottleneck topology. Moreover, out of
+the total TCP flows, we set $45$\%, $20$\%, $25$\% and $10$\% of flows
+using CUBIC, CTCP, NewReno and SACK TCP versions respectively, in similar
+to the percentage of web servers currently using the various TCP versions
+in the Internet~\cite{Yang}, with timestamps option set. The packet-size is
+kept constant, and is $1$~KB.
+
+
+\begin{figure}
+\centering
+	  \includegraphics[scale=0.4]{multi-bottleneck.pdf}
+          \captionof{figure}{Multiple-Bottleneck Topology}
+	  \label{fig:mtopology}
+%          \vspace{-0.3cm}
+\end{figure}
+
+We use cross-traffic both in forward and reverse direction of data
+transfers. Two different kinds of cross-traffic are used: (i) one is
+size-limited short TCP transfer, and (ii) the other is rate-controlled
+UDP transfer. For the first, $40$ nodes (cross-traffic generated nodes)
+each with $100$ TCP flows send 10--15 packets to the destination
+cross-traffic nodes. After starting the transfer for each flow, each node
+waits or sleeps for 4--6 seconds, before the next transfer. For the second
+one, $25$ nodes send UDP packets in a controlled manner. 
+%The load and UDP
+%packet transfer-rate were set in such a way so as to obtain a packet
+%drop-rate of 1.2--1.5\% at the bottleneck links with all flows using
+%constant IW-size of $4$ packets.
+
+%Here we set the value of parameter $\theta$ (in Function~\ref{eq:iw})
+%based on the simulated data, generated in the previous simulation
+%experiment~\cite{springerlink:10.1007}. In that work, Each
+%simulation-run generated $20,000$ flows from a mix of two
+%distributions---15\% of flows were generated using Pareto distribution
+%with shape $1.1$ and mean flow-size 1 MB, and remaining flows were from
+%Exponential distribution with a mean flow-size of 20 KB.
+
+Fig.~\ref{fig:cdf} shows the cumulative fraction of total bytes
+transferred by the generated flows, while taking the flow-sizes in
+increasing order of magnitude. As seen, nearly 85\% of total flows could
+contribute to only about 20\% of the volume. These contain flows with
+sizes less than or equal to 60~KB; hence, for our study here, we take
+all such flows as `small flows'. Similarly the last 10\% of flows
+account for over 75\% of total bytes; these flows, all with sizes
+greater than 200~KB, are considered `large flow'. Therefore, we set
+$\theta$ (refer Eq.~~\ref{eq:iw}) as 200.  In reality, $\theta$ can be
+set to a value between some minimum and maximum, say 60 and 200, giving
+the user freedom to configure it between these values.
+  
+  
+  
+
+%\vspace{-0.4cm}
+\subsection{Performance Evaluation on the Single-Bottleneck Topology} 
+\label{sec:perf}  
+
+This section studies the performance of flows using the IW function
+$IW(s)$, and compares it with the performance attained by flows using a
+constant IW-size for all flows.  Recall, $V$ is the upper bound of the
+IW-size when flows use the IW function defined in Eq.~\ref{eq:iw}. In
+the case where IW-size is constant for all flows, we use $C$ to denote
+the constant IW-size (in number of packets). We evaluate the IW function
+for various values of $V$, and compare against constant IW for different
+values of $C$.  Two load settings are considered: (i)~{\it overload}, a
+scenario where the packet drop-rate is $\approx 1.5\%$ when flows use a
+constant IW with $C=4$, and (ii)~{\it underload}, a scenario where the
+packet drop-rate is close to zero with $C=4$.
+
+\subsubsection*{\underline{Study under overload scenario}}
+ 
+
+The load in the simulation is set in such a way so as to obtain a packet
+drop-rate of $\approx 1.5\%$ with all flows using a constant IW-size,
+$C=4$ packets. We then maintain the same load for the rest of the
+simulations (in this scenario). Fig.~\ref{fig:mct_o} plots the mean
+completion time for range of flow-sizes. While $C=4$ denotes the plot of
+this metric for a constant IW-size of four segments (for all flows), the
+remaining are plots obtained with different values of $V$ in the IW
+function. As seen in the figure, the IW function gives smaller mean
+completion time to small flows in comparison to the constant IW. The
+improvement in response times for different values of $V$, compared to
+$C=4$, decreases with increasing flow-sizes.  Among the different values
+of $V$, $V=32$ shows a significant improvement, reducing mean completion
+time of small flows ($\le 60$) by $\approx 36\%$ in comparison to $C=4$;
+meanwhile, further reduction of response times is negligible with $V=64$
+in comparison to $V=32$ (as we will also see in
+Table~\ref{table:overload}). Fig.~\ref{fig:np_o} shows a similar trend
+for the network power due to an increase in goodput and a decrease in
+mean completion time. Observe that the value of $V$ that decreases
+$\overline{CT}_s$, increases the goodput (i.e.  average goodput of small
+flows). 
+
+\begin{comment}
+A large value of $V$ that
+increases $\overline{CT}_s$, may not increase conditional mean
+completion time of all small flows; and these flows with large
+flow-sizes contribute more for increasing goodput, and thereby, we get
+an increase in network power with larger value of $V$. The network power
+for a range of flow-sizes will decrease only when there is a decrease in
+goodput and an increase in mean completion time (affects all flows of
+range of flow-sizes).  
+\end{comment}
+
+
+\begin{figure}[H]
+ %\subfigure[Retransmission Timeouts]{
+     \begin{minipage}{0.4\linewidth}
+          \centering
+          \resizebox{65mm}{!}{\includegraphics{MeanCT_v_o.pdf}}
+          \captionof{figure}{Mean completion time for ranges of flow-sizes}
+         \label{fig:mct_o}
+     \end{minipage}
+   \qquad
+         % \hspace{0.1cm}
+           %\subfigure[Congestion Cuts]{
+     \begin{minipage}{0.5\linewidth}
+           \centering
+           \resizebox{65mm}{!}{\includegraphics{np_v_o.pdf}}
+           \captionof{figure}{Network Power for ranges of flow-sizes} 
+          \label{fig:np_o}
+     \end{minipage}
+   %\vspace{-0.5cm}
+  \end{figure}
+
+ \begin{figure}[H]
+           \centering
+           \resizebox{65mm}{!}{\includegraphics{improvement_mct_o.pdf}}
+           \caption{Percentage improvement in $\overline{CT}_s$ for $IW(s)$ w.r.t. $C=V$, and $C=4$}
+           \label{fig:ct_o}
+      \end{figure}
+
+
+Fig.~\ref{fig:ct_o} plots the percentage improvement in
+$\overline{CT}_s$ for different values of $V$ against $C=V$ and $C=4$.
+This is obtained using the formula,
+$(\overline{CT}_s^{C}-\overline{CT}_s^{IW(s)})\times
+100/\overline{CT}_s^{C}$, where $\overline{CT}_s^{C}$ is the mean
+completion time of small flows obtained with a constant IW-size of $C$.
+Observe that, one bar at each point is the percentage improvement in
+comparison to $C=4$, while the other bar is the improvement in
+comparison to $C=V$ (all flows having a constant IW-size of $V$), where
+each point corresponds to a value of $V$. The figure shows that IW
+function improves the average response times significantly for the
+different values of $V$ when compared against $C=4$. Comparing against
+$C=V$, IW functions with $V>=32$ give $\approx$ 13--19\% improvement in
+response times.
+ 
+%The percentage improvement in response times of small flows with
+%$V=32$, compared to $C$ set to $4$, is more significant; moreover, with
+%values of $V$ more than $32$, it shows a {\em dimishing returns}. 
+%\vspace{-0.5cm}
+
+Other metrics are listed in Table~\ref{table:overload}. $IW(s)$
+decreases the metric in comparison with increasing value of $V$ upto a
+point; and beyond that, it increases due to higher packet-losses. With
+$V$ set to $32$, the metrics show considerable improvement. In
+particular, $V=32$ brings down the retransmission timeouts faced by
+small flows (first column) to at least (approximately) half in
+comparison to using a constant IW-size for any value of $C$. Also,
+observe the trend of retransmission rates. With increasing value of $C$,
+both small and large flows experience higher retransmission rates
+compared to $C=4$; besides, small flows experience higher retransmission
+rates than large flows. However, for the IW function, the trend is
+different: the minimum value of $RR_s$ is obtained for $V=32$; besides
+for $V=32$, both small and large flows experience nearly same
+retransmission rates. The congestion cuts faced by small and all flows
+as well as the mean completion time of small flows are also minimum
+using the IW function with $V=32$. On the other hand, $V=64$ shows an
+increase in ${RT}_s$, when compared against $V=32$. As expected, due to
+increasing number of time-outs, number of retransmission packets increases, and
+hence, there will be an increase in retransmission rate. $V=64$ shows an
+increase in ${RR}_s$ by $0.8\%$ in comparison to $V=32$.
+
+
+\begin{table}[H]
+	      %\vspace{-0.5cm}
+        \centering
+        %\renewcommand{\arraystretch}{1.1}
+         \caption{Comparison of other metrics}
+         \resizebox{7.0cm}{!}{
+ 	             \begin{tabular}{|+l||^c||^c|^c||^c|^c||^c|^c|}
+  	           %\multicolumn{9}{}{}
+  	           %\setlength{\tabcolsep}{1pt}	\\
+   	           \hline
+    Parameter & ${RT}_s$  & ${RR}_s$ & ${RR}_l$& ${CC}_s$ & ${CC}_{a}$ &  $\overline{CT_s}$ & $\overline{CT_l}$  \\ \hline \hline 
+    $C$=4 & 1471 & 2.5  & 2.0 & 2530 & 5484 & 0.808 & 3.39 \\ \hline
+    $C$=10 & 1338  & 2.7 & 2.1 & 2204 & 4814  & 0.674 & 3.126 \\ \hline
+    $C$=16 & 1259 & 2.9  & 2.5 & 2109 & 5071 & 0.617 & 3.177 \\ \hline
+    $C$=32 & 1437 & 3.6  & 3.3 &  2241 & 5272 & 0.594 & 2.967\\ \hline
+    $C$=64 & 1684  & 4.4  & 4.0 & 2481 & 5494 & 0.622  & 2.771 \\ \hline
+	\hline
+    $V$=10 & 1256 & 2.6  & 2.1 & 2118 & 4983 & 0.656 & 3.359 \\ \hline  
+    $V$=16 & 1232 & 2.8  & 2.3 & 2089 & 4741 & 0.609 & 3.194 \\  \hline
+    $V$=32 & 848  & 2.1 & 2.0 & 1382 & 3351 & 0.517 & 2.736\\ \hline
+    $V$=64 & 1172  & 2.9  & 2.97 & 1732 & 3884 & 0.535 & 2.725 \\ \hline
+    %$C$=128 & 2136 & 5.4  & 5.3 & 2984 & 5680 & 0.684  & 2.623 \\ \hline
+    %$V$=128 & 1295 & 3.2  & 3.4 & 1802 & 3738 & 0.556 & 2.481 \\ \hline
+ 	           \end{tabular}
+          } 
+         \label{table:overload}
+\vspace{-0.4cm}
+\end{table}
+
+%\vspace{-0.5cm}
+
+
+\subsubsection*{\underline{Study under underload scenario}}
+
+The load in the simulation is set so as to obtain almost zero packet
+drop-rate with all flows using a constant IW-size of four packets, i.e.,
+$C=4$. The same load is then maintained for the rest of the simulations
+(in this scenario). Figures~\ref{fig:mct_u} and~\ref{fig:np_u} plot the
+mean completion time and network power, respectively, for ranges of
+flow-sizes. We observe similar trend as in the previous scenario, though
+the improvement is lesser.  Fig.~\ref{fig:ct_u} plots the percentage
+improvement in $\overline{CT_s}$ for different values of $V$ against
+$C=V$ and $C=4$. The IW functions for different values of $V$ give
+significantly lower response times to small flows in comparison to
+$C=4$. Comparing against $C=V$, IW functions with $V>=32$ give $\approx$
+5--9\% improvement in response times. From Table~\ref{table:underload},
+we observe that even in underload scenario, $IW(s)$ decreases the
+metrics when compared against $C=V$. 
+
+
+\begin{figure}[H]
+ %\subfigure[Retransmission Timeouts]{
+     \begin{minipage}{0.4\linewidth}
+          \centering
+          \resizebox{65mm}{!}{\includegraphics{MeanCT_v_u.pdf}}
+          \captionof{figure}{Mean completion time for ranges of flow-sizes}
+         \label{fig:mct_u}
+     \end{minipage}
+   \qquad
+         % \hspace{0.1cm}
+           %\subfigure[Congestion Cuts]{
+     \begin{minipage}{0.5\linewidth}
+           \centering
+           \resizebox{65mm}{!}{\includegraphics{np_v_u.pdf}}
+           \captionof{figure}{Network Power for ranges of flow-sizes} 
+          \label{fig:np_u}
+     \end{minipage}
+   %\vspace{-0.5cm}
+  \end{figure}
+
+ \begin{figure}[H]
+           \centering
+           \resizebox{65mm}{!}{\includegraphics{improvement_mct_u.pdf}}
+           \caption{Percentage improvement in $\overline{CT}_s$ for $IW(s)$ w.r.t. $C=V$, and $C=4$}
+           \label{fig:ct_u}
+      \end{figure}
+
+
+%With large value of $V$, small flows experience smaller retransmission
+%rate than large flows; besides, with $V=64$, small flows show nearly
+%same retransmission rate in comparison to $C=4$ (as we see
+%Table~\ref{table:underload}).
+
+%From the analyses of different metrics in this scenario, we consider $64$
+%as an appropriate value for $V$ in $IW(x)$.
+
+\begin{table}[H]
+       % \vspace{-0.5cm}
+         \renewcommand{\arraystretch}{1}
+	       \centering	
+ 	      \caption{Comparison of other metrics}
+        \resizebox{7.0cm}{!}{
+ 	      \begin{tabular}{|+l||^c||^c|^c||^c|^c||^c|^c|}
+  	%\multicolumn{10}{|c|}{}
+  	%\setlength{\tabcolsep}{1pt}	\\
+   	    \hline
+%\rowstyle{\bfseries}
+Parameter & ${RT}_s$ & ${RR}_s$ & ${RR}_l$ & ${CC}_s$ & ${CC}_{a}$ &  $\overline{CT_s}$  & $\overline{CT_l}$  \\ \hline \hline 
+$C$=4 & 59  & 0.1  & 0.05 & 62 & 119 & 0.424 & 1.078 \\ \hline
+$C$=10 & 57 & 0.14  & 0.19 & 84 & 179  & 0.335 & 0.929 \\ \hline
+$C$=16 & 100 & 0.22 & 0.25 & 125 & 234 & 0.318 & 0.897 \\ \hline
+$C$=32 & 98  & 0.16 & 0.31 & 112 & 225 & 0.289 & 0.810\\ \hline
+$C$=64 & 83  & 0.19 & 0.42 & 105 & 217 & 0.272  & 0.703 \\ \hline \hline
+$V$=10 & 61  & 0.16  & 0.11 & 74 & 149 & 0.344 & 1.022 \\ \hline  
+$V$=16 & 62  &0.16 & 0.16 & 81 & 171 & 0.310  & 0.970 \\  \hline
+\rowstyle{\bfseries}$V$=32 & 44  & 0.08 & 0.11 & 54 & 120 & 0.277  & 0.883 \\ \hline
+$V$=64 & 46  & 0.13 & 0.23 & 62 & 144 & 0.249  & 0.779 \\ \hline
+%$C$=128 & 72  & 0.23 & 0.23 & 92 & 177 & 0.264  & 0.607 \\ \hline
+%$V$=128 & 38  & 0.12 & 0.16 & 54 & 132 & 0.247  & 0.709 \\ \hline
+ 	\end{tabular}
+        }
+ \label{table:underload}
+\end{table}
+
+
+%\vspace{-0.3cm}
+\subsubsection*{Discussions}
+
+The above analyses show that 32 and 64 are values for $V$ in the IW
+function that improve the performance of flows, in particular small flows.
+Between $V=32$ and $V=64$, the former gives better values for all metrics
+corresponding to performance of small flows. Hence, we recommend a value
+of 32 for $V$ while using the IW function. Next, we compare the performance
+of small flows using IW function with $V=32$ against that attained by a
+constant IW-size of 10 segments ($C=10$) under overload scenario. This
+constant IW-size is the most recently proposed value, by
+Google~\cite{increasing-IW-2010}. 
+
+Fig.~\ref{fig:ci-mct-1} plots the mean completion time for flow-sizes
+less than equal to $60$ packets, for $95\%$ confidence interval. Observe
+that the flows with sizes $\le10$~KB (corresponding to $C=10$)  show
+almost same response times with $V=32$ in comparison to $C=10$, whereas
+for sizes in range 10 to $\approx$40~KB, IW function shows a significant
+improvement compared to constant IW-size. However, the improvement in
+response times decreases with further increase in flow-size. We observed
+that the percentage improvement obtained by $V=32$ over $C=10$ for
+flow-size ranges of $\le10$, 10--30, and 30--60, were $4\%$, $32\%$, and
+$29\%$, respectively. 
+
+\begin{figure}[H]
+ %\subfigure[Retransmission Timeouts]{
+     \begin{minipage}{0.4\linewidth}
+          \centering
+          \resizebox{65mm}{!}{\includegraphics{ci-mct-v-o_1.pdf}}
+          \captionof{figure}{Mean completion time}
+         \label{fig:ci-mct-1}
+     \end{minipage}
+   \qquad
+         % \hspace{0.1cm}
+           %\subfigure[Congestion Cuts]{
+     \begin{minipage}{0.5\linewidth}
+           \centering
+           \resizebox{65mm}{!}{\includegraphics{ci-np-v-o.pdf}}
+           \captionof{figure}{Network Power} 
+          \label{fig:4-np}
+     \end{minipage}
+   %\vspace{-0.5cm}
+  \end{figure}
+
+
+Fig.~\ref{fig:4-np} plots network power for $95\%$ confidence level.  For
+$V=32$, network power increases with increasing flow-sizes, up to
+$\approx32$~KB.  However, at flow-size of $32$~KB, there is a sudden
+change (drop) in network power, and again, it increases with increasing
+flow-sizes further. This sudden drop is due to the increase in RTT, as
+the flow-size goes beyond the value of $V$, necessitating another window
+of packets for flow completion.  However, the important observation is
+that, flows with sizes greater than 10~KB show large improvement in
+goodput, indicating that the value of $C=10$ is conservative.
+
+\begin{figure}[H]
+ %\subfigure[Retransmission Timeouts]{
+     \begin{minipage}{0.4\linewidth}
+          \centering
+          \resizebox{65mm}{!}{\includegraphics{RT_small.pdf}}
+          \captionof{figure}{Retransmission Timeouts}
+         \label{fig:rt}
+     \end{minipage}
+   \qquad
+         % \hspace{0.1cm}
+           %\subfigure[Congestion Cuts]{
+     \begin{minipage}{0.5\linewidth}
+           \centering
+           \resizebox{65mm}{!}{\includegraphics{CC_small.pdf}}
+           \captionof{figure}{Congestion Cuts} 
+          \label{fig:cc}
+     \end{minipage}
+   %\vspace{-0.5cm}
+  \end{figure}
+
+Fig.~\ref{fig:rt} plots the total number of retransmission timeouts
+faced by flows for range of sizes of small flows. It shows that, the
+number of timeouts faced by small flows is reduced when using the IW
+function with $V=32$, in comparison to one-fit-all IW-size with $C=10$.
+The reduction in the number of timeouts is by 25--45\% for flow-sizes
+less than or equal to 30~KB, with the difference in the number of
+timeouts reducing with increasing flow-size. Similar observation can be
+made from Fig.~\ref{fig:cc}, which plots the total number of times the
+flows within a particular range of sizes reduced their congestion
+windows during their lifetimes.  The number of congestion-cuts faced by
+small flows also reduces under the IW function.
+
+\begin{comment}
+\begin{figure}[H]
+     % \vspace{-0.4cm}
+      \begin{center}
+              \includegraphics[scale=0.4]{ci-np-v-o.pdf}
+              \caption{Network Power}
+              \label{fig:np}
+      \end{center}
+\end{figure}
+\end{comment}
+
+\begin{comment}
+\subsubsection{\underline{Study under RED AQM}}
+\begin{table}[H]
+       % \vspace{-0.5cm}
+         \renewcommand{\arraystretch}{1}
+	       \centering	
+ 	      \caption{Comparison of other metrics}
+        \resizebox{9.0cm}{!}{
+ 	      \begin{tabular}{|+l||^c||^c|^c||^c|^c||^c|^c|}
+  	%\multicolumn{10}{|c|}{}
+  	%\setlength{\tabcolsep}{1pt}	\\
+   	    \hline
+%\rowstyle{\bfseries}
+Parameter & ${RT}_s$ & ${RR}_s$ & ${RR}_l$ & ${CC}_s$ & ${CC}_{a}$ &  $\overline{CT_s}$  & $\overline{CT_l}$  \\ \hline \hline 
+$C$=4 & 1723  & 2.66  & 2.1 & 5836 & 15031 & 0.594 & 5.025 \\ \hline
+$C$=10 & 1753 & 2.96  & 2.33 & 5700 & 15077  & 0.485 & 4.855 \\ \hline
+$C$=16 & 1980 & 3.32 & 2.66 & 5992 & 15864 & 0.457 & 4.910 \\ \hline
+$C$=32 & 2331  & 4.23 & 3.3 & 6619 & 17390 & 0.447 & 5.059 \\ \hline
+%$C$=64 & 83  & 0.19 & 0.42 & 105 & 217 & 0.272  & 0.703 \\ \hline \hline
+$V$=10 & 1466  & 2.62  & 2.0 & 5127 & 13852 & 0.467 & 4.921 \\ \hline  
+$V$=16 & 1546  & 2.82 & 2.24 & 5105 & 13717 & 0.426  & 4.812 \\  \hline
+\rowstyle{\bfseries}$V$=32 & 1702  & 3.05 & 3.26 & 5152 & 13547 & 0.399  & 4.689 \\ \hline
+%$V$=64 & 46  & 0.13 & 0.23 & 62 & 144 & 0.249  & 0.779 \\ \hline
+%$C$=128 & 72  & 0.23 & 0.23 & 92 & 177 & 0.264  & 0.607 \\ \hline
+%$V$=128 & 38  & 0.12 & 0.16 & 54 & 132 & 0.247  & 0.709 \\ \hline
+ 	\end{tabular}
+        }
+ \label{table:underload}
+\end{table}
+
+
+\subsubsection{\underline{Study under Large BDP network}}
+
+\begin{table}[H]
+       % \vspace{-0.5cm}
+         \renewcommand{\arraystretch}{1}
+	       \centering	
+ 	      \caption{Comparison of other metrics}
+        \resizebox{9.0cm}{!}{
+ 	      \begin{tabular}{|+l||^c||^c|^c||^c|^c||^c|^c|}
+  	%\multicolumn{10}{|c|}{}
+  	%\setlength{\tabcolsep}{1pt}	\\
+   	    \hline
+%\rowstyle{\bfseries}
+Parameter & ${RT}_s$ & ${RR}_s$ & ${RR}_l$ & ${CC}_s$ & ${CC}_{a}$ &  $\overline{CT_s}$  & $\overline{CT_l}$  \\ \hline \hline 
+$C$=4 & 1379  & 3.76  & 1.52 & 2463 & 4456 & 2.964 & 12.744 \\ \hline
+$C$=10 & 3257 & 6.94  & 2.72 & 4963 & 8073  & 2.882 & 13.931 \\ \hline
+$C$=16 & 5214 & 8.94 & 3.13 & 7046 & 10626 & 2.987 & 15.039 \\ \hline
+
+%$C$=64 & 83  & 0.19 & 0.42 & 105 & 217 & 0.272  & 0.703 \\ \hline \hline
+$V$=10 & 2275  & 5.78  & 2.08 & 3827 & 6401 & 2.697 & 13.689 \\ \hline  
+$V$=16 & 3910  & 7.38 & 2.38 & 5631 & 8675 & 2.794  & 14.256 \\  \hline
+%\rowstyle{\bfseries}$V$=32 & 44  & 0.08 & 0.11 & 54 & 120 & 0.277  & 0.883 \\ \hline
+$V$=32 & 6639  & 7.88 & 2.48 & 8143 & 11632 & 3.004 & 15.122\\ \hline
+%$V$=64 & 46  & 0.13 & 0.23 & 62 & 144 & 0.249  & 0.779 \\ \hline
+%$C$=128 & 72  & 0.23 & 0.23 & 92 & 177 & 0.264  & 0.607 \\ \hline
+%$V$=128 & 38  & 0.12 & 0.16 & 54 & 132 & 0.247  & 0.709 \\ \hline
+ 	\end{tabular}
+        }
+ \label{table:underload}
+\end{table}
+\end{comment}
+
+\subsection{Performance Evaluation on the Multi-Bottleneck Topology}
+\label{sec:multi-bottleneck}
+
+In this section, we study the performance of flows using the IW function
+$IW(s)$ for various values of $V$. We then compare the results against
+that attained by flows using constant IW for different values of $C$. We
+carry out the above when the underlying network paths are heavily congested
+and the flows pass through multiple bottleneck links (See
+Fig.~\ref{fig:mtopology}).
+
+
+The load and UDP packet transfer-rate in the simulation are set in such a
+way so as to obtain a packet drop-rate of 1.2--1.5\% at the bottleneck
+links (R1--R2, R2--R3 and R4--R5) with all flows using constant IW-size of
+4 packets. We then maintain the same load for the rest of the simulations.
+Fig.~\ref{fig:4-mct} plots the mean completion time for range of flow-sizes.
+We observe similar trend as in single-bottleneck topology scenario. Among
+the different values of $V$, $V=32$ shows a significant improvement,
+reducing mean completion time of small flows by $\approx$ $30\%$ in
+comparison to $C=4$. Fig.~\ref{fig:4-ct} plots the percentage improvement in
+${\overline{CT}}_s$ for different values of $V$ against $C=V$ and $C=4$.
+Comparing against $C=4$, IW functions with various values of $V$ give
+$\approx$ 12--30\% improvement in response times. IW functions with $V \ge
+32$ achieve $\approx$ 22--26\% improvement in response times when compared
+against $C=V$.
+
+\begin{figure}[H]
+ %\subfigure[Retransmission Timeouts]{
+     \begin{minipage}{0.4\linewidth}
+          \centering
+          \resizebox{65mm}{!}{\includegraphics{MeanCT.pdf}}
+          \captionof{figure}{Mean completion time for ranges of flow-sizes}
+         \label{fig:4-mct}
+     \end{minipage}
+   \qquad
+         % \hspace{0.1cm}
+           %\subfigure[Congestion Cuts]{
+     \begin{minipage}{0.5\linewidth}
+           \centering
+           \resizebox{65mm}{!}{\includegraphics{improvement_mct.pdf}}
+           \captionof{figure}{Percentage improvement in $\overline{CT}_s$ for
+$IW(s)$ w.r.t. $C=V$, and $C=4$} 
+          \label{fig:4-ct}
+     \end{minipage}
+   %\vspace{-0.5cm}
+  \end{figure}
+
+
+Other metrics are listed in Table~\ref{table:mtopology}. Observe that IW
+function improves the metrics for the different values of $V$ when compared
+against $C=V$. Both small and large flows experience higher retransmission
+rate with increasing $C$. However, the trend is opposite with increasing
+$V$. Small flows improve the metrics like ${RT}_s$, ${RR}_s$ and ${CC}_s$,
+with $V=64$ compared to other values of $V$; but, the improvement is
+negligible when we compare against $V=32$. On the other hand, $V=32$ decreases
+the ${CT}_s$ by more than $300$~ms, while at the same time increasing ${RR}_s$
+by $0.1\%$, compared to $V=64$.      
+
+
+
+
+\begin{comment}
+\begin{figure}[h]
+       \begin{center}
+	      %\vspace{-0.5cm}
+             \subfigure[Mean completion time for ranges of flow-sizes]{
+		              \resizebox{56mm}{!}{\includegraphics{MeanCT.pdf}}
+	           	   \label{fig:mct}
+		           }
+   %          \vspace{-0.3cm}
+            \qquad
+	           \subfigure[Percentage improvement in $\overline{CT}_s$ for
+$IW(s)$ w.r.t. $C=V$, and $C=4$]{
+		             \resizebox{56mm}{!}{\includegraphics{improvement_mct.pdf}}
+               %\caption{Percentage improvement in mean completion time of IW function w.r.t. $C=V$, and $C=4$}
+  	    	       \label{fig:ct}
+            }
+	          \caption{Performance metrics under underload scenario}
+      \end{center}
+    % \vspace{-0.8cm}
+ \end{figure}
+\end{comment}
+
+
+\begin{table}[H]
+	    %  \vspace{-1cm}
+        %\renewcommand{\arraystretch}{1.1}
+         \caption{Comparison of other metrics}
+         \resizebox{9.0cm}{!}{
+ 	             \begin{tabular}{|+l||^c||^c|^c||^c|^c||^c|^c|}
+  	           %\multicolumn{9}{}{}
+  	           %\setlength{\tabcolsep}{1pt}	\\
+   	           \hline
+    Parameter & ${RT}_s$  & ${RR}_s$ & ${RR}_l$& ${CC}_s$ & ${CC}_{a}$ &  $\overline{CT_s}$ & $\overline{CT_l}$  \\ \hline \hline 
+    $C$=4 & 1741 & 3.3  & 15.8 & 3190 & 13974 & 1.887 & 19.54 \\ \hline
+    $C$=10 & 2117  & 4.6 & 16.2  & 3385 & 13828  & 1.565 & 18.668 \\ \hline
+    $C$=16 & 2994 & 7.3  & 18.2 & 4240 & 15646 & 1.635 & 19.689 \\ \hline
+    $C$=32 & 2191 & 5.0  & 17.2 & 3368 & 12436 & 1.711 & 16.786\\ \hline
+    $C$=64 & 2507  & 6.2  & 17.1 & 3886 & 12064 & 2.245  & 16.764 \\ \hline
+	\hline
+    $V$=10 & 2123 & 4.5  & 16.5 & 3243 & 13521 & 1.481 & 18.816 \\ \hline  
+    $V$=16 & 2772 & 6.6  & 16.2 & 3966 & 14355 & 1.532 & 19.2 \\  \hline
+    \rowstyle{\bfseries}$V$=32 & 1714  & 3.8 & 15.9 & 2646 & 11069 & 1.335
+& 16.327 \\ \hline
+    $V$=64 & 1463  & 3.7  & 15.7 & 2447 & 9929 & 1.669 & 15.283 \\ \hline
+    %$C$=128 & 2136 & 5.4  & 5.3 & 2984 & 5680 & 0.684  & 2.623 \\ \hline
+    %$V$=128 & 1295 & 3.2  & 3.4 & 1802 & 3738 & 0.556 & 2.481 \\ \hline
+ 	           \end{tabular}
+          } 
+         \label{table:mtopology}
+\vspace{-0.3cm}
+\end{table}
+
+% needed in second column of first page if using \IEEEpubid
+%\IEEEpubidadjcol
+
+\section{Conclusions}
+\label{sec:conclusions}
+
+In this paper, we proposed a simple but effective function that
+determines the value of IW for a TCP flow in such a way so as to benefit
+large number of small flows. The IW-size of a flow is dependent on its
+size, and only two parameters---$V$ and $\theta$---defined by the user
+(${IW}_{\min}$ being defined by the standard). Using game-theoretic
+analysis under the framework of evolutionary non-cooperative game, we
+studied how different values for $V$ (used by different users) affect
+the performance of small flows, and showed that the game has a unique
+ESS where the fractions of population using various values of $V$ do not
+change in time. Our game-theoretic results revealed that, small flows
+with a large value of $V$ achieve better performance than with a small
+value. 
+
+
+We then conducted simulation-based studies to evaluate the performance
+attained by flows using the IW function for various values of $V$, in
+both single- and multiple-bottleneck topologies, under different network
+load settings. Simulations showed that the function performs
+significantly better than a constant IW-size for all flows, while at the
+same time not affecting the performance of large flows. In
+single-bottleneck simulation topology, we observed that among the
+different values of $V$, $V=32$ shows a significant improvement of the
+metrics when compared against $C=4$. Similarly, in more realistic
+multiple-bottleneck topology, our results confirmed that, $V=32$ is a
+good choice as it decreases the response times of small flows
+significantly in comparison to other values of $V$.  We are currently
+working to set the value of $V$ dynamically (between a given range)
+depending on observed packet losses. We also plan to experiment the
+function on a real testbed.
+
+
+
+
+
+\begin{comment}
+\section{Conclusions}
+
+
+ In this paper, we proposed a simple but effective function that determines
+the value of IW for a TCP flow in such a way so as to benefit large number
+of small flows. The IW-size of a flow is dependent on its size, and only
+two parameters---$V$ and $\theta$---defined by the user (${IW}_{\min}$
+being defined by the standard). Using game-theoretic analysis under the
+framework of evolutionary non-cooperative game, we studied how different
+values for $V$ (used by different users) affect the performance of small
+flows, and showed that the game has a unique ESS where the fractions of
+population using various values of $V$ do not change in time. Using our
+proposed model, we demonstrated several properties of the ESS under some
+relevant flow-size distributions. Our game-theoretic results revealed that,
+there exists an optimal value for $V$ for which small flows achieve better
+performance than with other values.
+\end{comment}
+

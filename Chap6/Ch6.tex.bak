@@ -1,0 +1,315 @@
+\clearpage
+\thispagestyle{empty}
+%\graphicspath{{figures/}}
+~\clearpage
+\chapter{Simulation Results and Discussions}
+%\section{Observations and Remarks}
+\label{chap6_simulation}
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width = \columnwidth]{stair}	
+	\caption{The I/O characteristics for ADC with a ramp input of 4.88~MHz frequency.}
+	\label{stair_INL1}
+\end{figure}
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width = \columnwidth]{sine}
+	\caption{Transient response of the ADC to a 4.88~MHz sine wave.}
+	\label{stair_INL2}
+\end{figure}
+
+\hspace{0.15in} The flash-SAR hybrid ADC is designed in a standard 28~nm CMOS technology and operates with a supply voltage of 0.9~V. The design is intended for a resolution of 6 bits. Hence, the value of LSB is determined as $\text{LSB} = 0.9/2^6 = 14.0625~\text{mV}$. 
+
+To verify the functionality of the designed ADC, the ADC has been tested with two different inputs, ramp and sinusoidal waves. Fig.~\ref{stair_INL1} shows the I/O Characteristics with a full-scale ramp input with the frequency of 4.88~MHz. The ADC shows offset error of 1~LSB without any missing codes. Fig.~\ref{stair_INL2} shows the response of the ADC to a sinusoidal input of 4.88~MHz. The ADC output is passed through an ideal 8-bit DAC to generate analog levels. The plot shows the digitized sine wave.
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width = \columnwidth]{inldnl}
+	\caption{INL/DNL plots for the designed ADC.}
+	\label{stair_INL3}
+\end{figure}
+
+Fig.~\ref{stair_INL3} shows the integral nonlinearity~(INL) and differential nonlinearity~(DNL) of the complete design. The DNL for the ADC is +0.47~LSB/-0.38~LSB. The DNL is in agreement with the input-output characteristic and shows no missing codes. The plot shows an INL of +1.10~LSB/-0.75~LSB. Larger value of INL is observed after digital code 40 because of the capacitance mismatch due to the bridge capacitor, implemented using MOM structure. This happens when the switching of maximum capacitors occur.
+
+
+\begin{figure}[!hbt]
+	\centering
+	\includegraphics[width=\columnwidth]{fft1}
+	\caption{1024-point FFT for a sinusoidal signal with 96~MHz of frequency.}
+	\label{freq_plots1}
+\end{figure}
+
+The 1024-point FFT for 96~MHz sinusoidal input is shown in Fig~\ref{freq_plots1}. The peak SNR is 34.03~dB from the plot, which results in an ENOB of 5.33 bits. The ADC is single-ended and hence the even harmonics are also present. The FFT shows a spurious free dynamic range~(SFDR) of 40.36~dB because of the spur at fourth harmonic.  
+
+\begin{figure}[!hbt]
+	\centering
+	\includegraphics[width=\columnwidth]{dr}
+	\caption{Variation of the SNR with input signal amplitude for a 1~MHz sinusoid.}
+	\label{freq_plots2}
+\end{figure}
+
+
+Fig~\ref{freq_plots2} shows the variation of SNR with input signal amplitude for a 100~MHz input. The curve has 1~dB/dB of slope. The plot shows the dynamic range~(DR) of 34.32~dB.
+
+%\begin{table}[!htb]
+%	\centering
+%	\caption{Comparison with the state-of-the-art works.}
+%	\label{tab:compare}
+%	\begin{tabular}{c|c|c|c|c|c|c|c|c|c|c}
+%		\hline 
+%		& Tech. & $V_{DD}$ & Arch. & ENOB & $F_s$ & SFDR & SNDR & Power & Conv. & FOM\\
+%		& (nm) & (V) &       & (Bits) & (GHz) & (dB) & (dB) & (mW) & cycles$^{***}$ & (fJ/conv)$^{****}$ \\
+%		\hline
+%		\cite{com3} & 65 & 1.2 & SAR & 5.72 & 0.55 & 47.97 & 36.21 & 3.12 & 6 & 88.6\\  
+%		\cite{com4} & 40 & 1.1 & SAR &  5.29 & 0.7 & -- & 31.5 & 3.1 & 5 & 144\\
+%		\cite{com5} & 55 & 1.2 & SAR & 5.6 &    1.6 & 52 & 35.4 & 5 & 6 & 64\\
+%		\cite{iet} & 180 & 1.8 & SAR & 5.87 & 0.30 & 41 & 36.02 & 0.64 & 6 & 36.47 \\
+%		\cite{icecs} & 180 & 1.8 & Flash & 3.6 & 0.40 & 26.5 & 23 & 0.95 & 1 & 190 \\
+%		\cite{mwscas} & 65 & 1.2 & Pipeline & 5.63 & 1.5 & -- & 35.8 & 5.8 & -- & 78 \\
+%		%\citet{com2} & 65 & 1 & 3b/cy SAR & 4.69 & 0.37 & 41.95 & 28.52 & 1.84 &  & 189.2\\
+%		\cite{com1} & 65 & -- & 2b/cy SAR & 5.9 & 0.32 & 48.52 & 37.20 & 9.81 & 3 & 479\\
+%		\cite{tvlsi} & 65 & 1.2 & 2b/cy SAR & 8.13 & 0.70 & -- & -- & 5.9 & 5 & 30.1 \\
+%		This work & 28 & 0.9 & 3b/cy SAR & 5.61 & 1 & 40.81 & 35.56 & 2.33 & 2 & 47.7\\
+%		\hline
+%	\end{tabular}
+%	\\
+%	\hspace{-3.25in}\small{$^{***}$Excludes the sampling cycle.}
+%	\\
+%	\hspace{-3.8in}\small{$^{****}$FOM =$\frac{\text{Power}}{2^{\text{ENOB}}\times F_s}.$}
+%\end{table}
+\begin{table}[!tb]
+	\centering
+	\caption{Comparison with state-of-the-art works.}
+	\label{tab:compare}
+	\begin{tabular}{c|c|c|c|c|c|c}
+		\hline 
+		Parameters & \cite{com1} & \cite{com2} & \cite{com3} & \cite{com4} & \cite{com5} & This work\\
+		\hline
+		Process~(nm) & 65 & 65 & 65 & 40 & 55 & 28\\
+		$V_{DD}$~(V) & NR & 1 & 1.2 & 1.1 & 1.2 & 0.9 \\
+		Architecture & 2b/cy SAR & 3b/cy SAR & SAR & SAR & SAR & 3b/cy SAR\\ 
+		ENOB~(Bits) & 5.9 & 4.69 & 5.72 & 5.29 & 5.6 & 5.61 \\
+		$F_s$~(MHz) & 320 & 370 & 550 & 700 & 1600 & 1000\\
+		SFDR~(dB) & 48.52 & 41.95 & 47.97 & NR & 52 & 40.81\\
+		SNDR~(dB) & 37.20 & 28.52 & 36.21 & 31.5 & 35.4 & 35.56\\
+		%DNL~(LSB) & & & & & & \\
+		%INL~(LSB) & & & & & & \\
+		Power~(mW) & 9.81 & 1.84 & 3.12 & 3.1 & 5 & 2.33\\
+		FOM~(fJ/conv)$^a$ & 479 & 189.2 & 88.6 & 144 & 64 & 47.7\\
+		\hline
+	\end{tabular}
+	\\
+	\hspace{-3.8in}\quad\small{$^a$FOM =$\frac{\text{Power}}{2^{\text{ENOB}}\times F_s}$}
+\end{table}
+
+\begin{figure}[!hbt]
+	\centering
+	\includegraphics[width=\columnwidth]{sndr}
+	\caption{Variation of SNDR with input signal frequency.}
+	\label{freq_plots3}
+\end{figure}
+
+The variation of signal-to-noise-and-distortion ratio~(SNDR) with input signal frequency is shown in Fig~\ref{freq_plots3}. The SNDR drops by 3~dB from the peak value of 35.56~dB at 300~MHz. Hence, 300~MHz is the effective-resolution bandwidth~(ERBW) of the ADC.
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=\columnwidth]{2310u}
+	\caption{Power consumption of various sub-blocks of the ADC.}
+	\label{power}
+\end{figure}
+
+The pie-chart in Fig.~\ref{power} shows the power consumption of various sub-parts of the ADC. The total power consumption is 2.33~mW. The CDAC array consumes the most power. This is because of the switching of the capacitors in the CDAC. Unlike the dynamic comparators, the inverter based comparator array consumes only $250~\mu \text{W}$ of power. Further, the digital logic circuitry consumes $550~\mu \text{W}$ of power. 
+
+The eye diagram of the MSB output bit with a pseudo-random bit sequence~(PRBS) of 10~ns bit period, is shown in Fig.~\ref{eye}. The plot shows total jitter of 62.42~ps, resulting in 6.24\% of the bit-period.
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width = \columnwidth]{eye}
+	\caption{Eye diagram of the MSB with PRBS of 10~ns bit period.}
+	\label{eye}
+\end{figure}
+
+\begin{table}[!htb]
+	\centering
+	\caption{Performance summary}
+	\label{perf}
+	\begin{tabular}{l l}
+		\hline
+		Parameter & Value\\
+		\hline
+		Technology & 28~nm CMOS\\
+		V$_{DD}$ & 0.9~V\\
+		Architecture & 3-bit per cycle SAR\\
+		%F$_s$ & 1~GHz\\
+		ERBW & 300~MHz\\
+		DNL & +0.47/-0.38~LSB\\
+		INL & +1.10/-0.75~LSB\\
+		%%SNDR~(max) & 35.56~dB\\
+		%%SFDR~(max) & 40.81~dB\\
+		%%ENOB~(max) & 5.61~bits\\
+		DR~(@1~MHz) & 34.32~dB\\
+		Total Jitter & 6.42~\% of the bit-period\\
+		%%Power & 2.33~mW\\
+		%%FOM & 47.7~fJ/conversion\\
+		\hline
+	\end{tabular}
+\end{table}
+
+Table~\ref{tab:compare} compares the proposed ADC with the state-of-the-art works. The design has been compared with ADCs reporting simulation results. The designed ADC shows a FOM of 47.7~fJ/conversion. The proposed design shows an excellent performance in terms of energy efficiency.
+Also, the design takes only two conversion cycles to achieve 6-bit resolution; however, the SAR-ADC takes 6 cycles to achieve the same. This leads to a significant increase in the sampling frequency as compared with the SAR ADC architectures. Further, 9-bit resolution can be achieved with this architecture by letting the loop to run for one more cycle, i.e. for 3 cycles. Also, this means only a small increase in hardware in digital logic and CDAC. Further, this design uses an inverter based comparator, and hence is easily scalable with technology. Table~\ref{perf} shows the performance summary of the designed ADC in terms of INL, DNL, ERBW, DR, and total Jitter.  
+
+
+%\section{The CDAC}
+%\hspace{4em} Figure~\ref{io} shows the Input/Output (I/O) characteristics of the designed DAC. The I/O characteristics is sampled uniformly every 125~ps. The comparator latches the DAC output every 125~ps, therefore, correct values at this instant is a must. The plot shows minimum deviation from the ideal converter charateristics as shown in Figure~\ref{ideal} with the LSB of 1.76~mV. To simulate ideal characteristics of a DAC, the block is described behaviourally in verilog-A.
+%\begin{figure}[httb]
+%	\centering
+%	\subfigure[]{\includegraphics[width=0.7\columnwidth]{io.eps}}
+%	\subfigure[]{\includegraphics[width = 0.7\columnwidth]{io_zoom}}
+%	\caption{(a)~I/O Characteristics of 9-bit DAC, (b)~zoomed characteristics showing first 32 codes.}
+%	\label{io}
+%\end{figure}
+%
+%\begin{figure}
+%	\centering
+%	\subfigure[]{\includegraphics[width = 0.7\columnwidth]{ideal.eps}}
+%	\subfigure[]{\includegraphics[width = 0.7\columnwidth]{ideal_zoom}}
+%	\caption{(a)~I/O characteristics of an ideal DAC, (b)~zoomed characteristics showing first 32 codes.}
+%	\label{ideal}
+%\end{figure} 
+%
+%Integral Non-Linearity (INL) can be found from subtraction of actual I/O characteristics from ideal characteristics. The maximum value of INL is found out to be 1~LSB. Extended plot for INL can be seen in Figure~\ref{3}.
+%
+%Differential Non-Linearity (DNL) can be found by subtracting the analog reference voltages for two succesive codes. I denotes the step change between actual characteristics and ideal convertor characteristics. It can be estimated as given in Equation~\ref{DNL}\cite{19}. Maximum DNL is found out to be 0.11~LSB. Plot for DNL is shown in Figure~\ref{5}. 
+%\begin{equation}
+%DNL = \left(\frac{V_{ac}}{V_{ic}}-1\right)LSBs
+%\label{DNL}
+%\end{equation}
+%where $V_{ac}$ is the step size in actual characteristics,\\
+%and $V_{ic}$ is the step size in ideal characteristics. 
+%
+%The origin of INL and DNL is the value of capacitors. The inconsistency seen in the INL and DNL plots is beacause of glitches. Glitches occur whenever there is a "major-carry transition" (011\ldots11 to 100\ldots00). Due to these glitches, we might have missing codes in the DAC, i.e. for some digital codes the analog output is not generated. One can use a filter to remove these glitches; however, using a filter will prolong the settling of the DAC. Since, major carry transitions are uniformly spaced, the glitches are also uniformly spaced in I/O characteristics, INL and DNL plots.
+%
+%Metal-oxide-metal (MOM) capacitors are used for the design. Mismatch between the capacitors also gives rise to INL and DNL. 
+%
+%\begin{figure}[httb]
+%	\centering
+%	\includegraphics[width=0.7\columnwidth]{INL.eps}
+%	\caption{INL of the 9-bit DAC.}
+%	\label{3}
+%\end{figure}
+%
+%\begin{figure}[httb]
+%	\centering
+%	\includegraphics[width=0.7\columnwidth]{dnl.eps}
+%	\caption{DNL of the 9-bit DAC.}
+%	\label{5}
+%\end{figure}
+%
+%Apart from static characteristics, DAC was also tested for dynamic characteristics. For a 10~MHz input, the FFT looks as shown in Figure~\ref{FFT}. The FFT is taken for a full scale input~(0.9~V$_{PP}$).   
+%
+%\begin{figure}[httb]
+%	\centering
+%	\includegraphics[width=0.7\columnwidth]{fft.eps}
+%	\caption{FFT of the 9-bit DAC.}
+%	\label{FFT}
+%\end{figure}
+%
+%The first 15 harmonics are shown in Figure~\ref{harmonic}. This results in peak SFDR of 52.8~dB, as shown in Figure~\ref{SFDR}.
+%
+%\begin{figure}[httb]
+%	\centering
+%	\includegraphics[width=0.7\columnwidth]{harmonics.eps}
+%	\caption{First 15 harmonics associated with output.}
+%	\label{harmonic}
+%\end{figure}
+%
+%\begin{figure}[httb]
+%	\centering
+%	\includegraphics[width=0.7\columnwidth]{SFDR.eps}
+%	\caption{Variation of SFDR with input amplitude.}
+%	\label{SFDR}
+%\end{figure}
+%
+%SNR varies with input voltage amplitude and maximum SNR for the DAC is always below the full scale value. Maximum SNR occurs for input amplitude of Figure~\ref{SNR} shows the variation of SNR with input signal amplitude. The maximum SNR is noted as 55.8~dB. 
+%\begin{figure}[httb]
+%	\centering
+%	\includegraphics[width=0.7\columnwidth]{SNR.eps}
+%	\caption{Variation of SNR with input amplitude.}
+%	\label{SNR}
+%\end{figure}
+%
+%ENOB for the DAC can be deduced from the maximum SNR and it comes out to be 8.5~bits, which is less than 9. However, it is to be expected because we consider only quantization noise in the analysis. In the real system, there are many other types of noise present~(for example, thermal noise, flicker noise, shot noise etc.). The variation in ENOB with signal amplitude is shown in Figure~\ref{ENOB}.
+%\begin{figure}[httb]
+%	\centering
+%	\includegraphics[width=0.7\columnwidth]{ENOB.eps}
+%	\caption{Variation of ENOB with input amplitude.}
+%	\label{ENOB}
+%\end{figure}
+%
+%
+%\section{The comparator}
+%\hspace{4em} The ADC is targetted for 1GSPs L-band frequency applications. The designed Flas-SAR hybrid ADC takes four cycles to complete a conversion. Therefore, the comparator should work at 4~GHz. Speed of the comparator is a very important criteria for the design of a high speed ADC.
+%
+%The speed of comparator depends upon the size of the differential input. For smaller inputs, comparator takes longer time to give a decision. Figure~\ref{compare} shows the settling of the designed comparator for a 1~mV sinusoidal signal for a stronARM latch. Figure~\ref{compa} shows the settling of a current mode comparator as discussed in Section~\ref{aaa} for a 2~mV sinusoidal signal and the output is observed.
+%
+%\begin{figure}[httb]
+%	\centering
+%	\subfigure[]{\includegraphics[width=0.7\columnwidth]{compclk.eps}}
+%	\subfigure[]{\includegraphics[width=0.7\columnwidth]{vpx.eps}}
+%	\subfigure[]{\includegraphics[width=0.7\columnwidth]{vnx.eps}}
+%	\subfigure[]{\includegraphics[width=0.7\columnwidth]{vop.eps}}
+%	\subfigure[]{\includegraphics[width=0.7\columnwidth]{von.eps}}
+%	\subfigure[]{\includegraphics[width=0.7\columnwidth]{out.eps}}
+%	\label{compare}
+%	\caption{StrongARM latched comparator waveforms: [a]~The clock signal, [b]~input at p-terminal, [c]~input at n-terminal, [d]~V$_{ON}$ signal (Table~\ref{tab}), [e]~V$_{OP}$ signal (Table~\ref{tab}), [f]~comparator output.}
+%\end{figure}
+%
+%\begin{figure}[httb]
+%	\centering
+%	\subfigure[]{\includegraphics[width=0.7\columnwidth]{clock1}}
+%	\subfigure[]{\includegraphics[width=0.7\columnwidth]{n.eps}}
+%	\subfigure[]{\includegraphics[width=0.6\columnwidth]{vnx.eps}}
+%	\subfigure[]{\includegraphics[width=0.7\columnwidth]{output}}
+%	\label{compa}
+%	\caption{Current mode comparator (Section~\ref{aaa}) comparator waveforms: [a]~The clock signal, [b]~input at p-terminal, [c]~input at n-terminal, [d]~comparator output.}
+%\end{figure}
+%
+%\section{The switch}
+%\hspace{4em} The transmission gate and bootstrapped switch are used to sample the input voltage ($V_{IN}$) on to a capacitor.
+%
+%Figure~\ref{7} shows the response of the transmission gate switch to a sinusoidal wave of 10~MHz frequency. The transmission gate has a variable on on resistance. Hence, it can distort the voltage value. Also, if the on resistance is high and varies a lot, it can introduce phase difference between input and output sinusoid. A small bulge can be seen at around 50~ns. This bulge is due to the variable resistance of transmission gate switch. However, the variation from actual value is less than 0.5~LSB at this point. So, the performance of the switch is considered satisfactory. 
+%
+%Figure~\ref{8} shows the response of the bootstrapped switch to a sinusoidal wave of 10~MHz frequency. The bootstrapped switch does not suffer from the problem of variable on resistance. Therefore, the performance of bootstrapped switch is superior.
+%
+%The average power consumed by a bootstrapped switch is 82.49~$\mu W$. However, the average power consumed by the transmimssion gate is only 89.03~$nW$. There is three orders of magnitude difference between the power consumption of bootstrapped switch and transmission gate switch.
+%As we need 22 sampling switches in the design, this difference in power consumption is significant. Therefore, the transmission gate switch is chosen as the sampler in the design.
+%\begin{figure}[httb]
+%	\centering
+%	\includegraphics[width=0.7\columnwidth]{TG.eps}
+%	\caption{Transmission gate switch response to a sine wave of 10~MHz frequency.}
+%	\label{7}
+%\end{figure}
+%\begin{figure}[httb]
+%	\centering
+%	\includegraphics[width=0.7\columnwidth]{BS.eps}
+%	\caption{Bootstrapped switch response to a sine wave of 10M~Hz frequency.}
+%	\label{8}
+%\end{figure}
+%
+%\section{The SAR logic}
+%Figure~\ref{sar} shows the timing waveforms generated by the SAR digital block. The SAR logic block is the brain of the Flash-SAR ADC. It generates the sampling pulse as it is given the ready signal. After sampling it generates the bit-patterns for the seven CDACs for three cycles. During these three cycles, the SAR block generates three bits per cycle according to the comparator outputs (It is done using a thermometer code to binary code converter). At the end of the third cycle, an end-of-conversion (EOC) signal is generated.   
+%
+%\begin{figure}[httb]
+%	\centering
+%	\subfigure[]{\includegraphics[width=0.7\columnwidth]{clock.eps}}
+%	\subfigure[]{\includegraphics[width=0.7\columnwidth]{sample.eps}}
+%	\subfigure[]{\includegraphics[width=0.7\columnwidth]{sig2.eps}}
+%	\subfigure[]{\includegraphics[width=0.7\columnwidth]{sig1.eps}}
+%	\subfigure[]{\includegraphics[width=0.7\columnwidth]{sig31.eps}}
+%	\caption{The timing waveforms generated by SAR block: [a]~The clock signal, [b]~The sampling pulse, [c]~Timing signal for the first conversion, [d]~Timing signal for the second conversion, [e]~Timing signal for the third conversion.}
+%	\label{sar}
+%\end{figure}	
+
+\clearpage 

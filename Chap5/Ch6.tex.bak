@@ -1,0 +1,189 @@
+\graphicspath{{Figures_chapter-5/}}
+\chapter{New finite difference scheme involving interfacial points for solving moving interface problems}
+\label{chap5}
+
+In this chapter, we apply finite difference idea developed in the previous chapter to partial differential equations in domains with discontinuities across time dependent moving or deforming interfaces. Second order accurate Crank-Nicolson scheme and HOC scheme are applied and their respective order of accuracies have been compared.
+
+Consider the following general 2D partial differential equation:
+\begin{equation}
+a u_t - \nabla.(b \nabla u) + c u_x + d u_y = f(t,X), \quad X\in \Omega , t \in (0,T]
+\label{general_moving}
+\end{equation}
+with jump condition on a time dependent interface $\Gamma (t)$:
+$$[u] = \hat{C},$$ $$\left[\beta \frac{\partial u}{\partial n}\right] = \sigma.$$
+%This type of moving interface problem has many applications, such as the Stefan problem, bubble dynamics etc. Moreover, N-S equations can be easily put in the form of equation \eqref{general_moving}.
+%We consider a general 2D partial differential (convection diffusion type) equation given by
+%\begin{equation}
+%b\frac{\partial \phi}{\partial t} - \nabla. (a \nabla  \phi) + c\frac{\partial \phi}{\partial x} + d\frac{\partial \phi}{\partial y} = f + \hat{C}\delta (x-X(s)) \delta (y-Y(s))
+%\end{equation}
+%This equation is defined in a bounded region $\Omega$ with a uniform cartesian grid where the coefficients are continuous except at the interface and $\delta$ is the Dirac delta function.
+
+\section{Interface representation and evolution}
+Numerous interface tracking techniques have been developed to represent and track moving and deforming interfaces. These techniques can mainly be divided into two classes. In the first class, interfaces are represented explicitly, for example by the use of Lagrangian control points or marker particles. Such representation was used by Peskin to model blood flow in the heart. Another example is the front tracking method presented in \cite{front_tracking1992}. In the second class, interface is not represented explicitly. It is instead defined implicitly by a higher dimensional function. Level set methods, volume of fluid methods, and phase field methods are the examples. Level set methods are already discussed in the previous chapters. In volume of fluid methods a so-called volume of fluid function gives the volume fraction of each fluid in each grid cell. They have an advantage that they conserve mass well.
+
+We apply two different implicit methods for discretization. Our interest in using a general equation is motivated by a desire to apply our idea to solve incompressible Navier-Stokes equations. Crank-Nicolson type discretization is compared with a recently developed higher order compact scheme (HOC) at regular points. This HOC scheme is developed by Kalita et al. for transient problems \cite{kalita2002} and are spatially fourth and temporally second order accurate. This scheme accommodates Dirichlet as well as Neumann boundary condition easily. The details of the implementation of HOC scheme can be found in \cite{kalita2002}.
+
+%\section{Mathematical formulation and Discretization procedure}
+%We consider the following one dimensional model problem
+%$$u_t + \lambda u u_x = (\beta u_x)_x - f(x,t) - \hat{C}\delta(x-\alpha(t)), \quad x \in [0, \alpha(t)] U (\alpha(t),1], $$
+%$$\frac{d \alpha}{dt} = \omega(t,\alpha;u,u_x),$$
+%where $\alpha(t)$ is the moving interface. This equation is defined in a simple region with a uniform cartesian grid. Across the interface, $\beta$ and $f$ may be discontinuous, and along with it $f$ may have a delta function singularity with strength $\hat{C}$.
+
+\section{Numerical Examples}
+We consider three different problems, two in 1D and one in 2D, with different levels of complexities for validation.
+
+Example 1: In one dimension, firstly, a non linear moving interface problem \cite{beyer1992} is considered of the form
+$$u_t + u u_x = (\beta u_x)_x - f(x,t).$$ Following exact solution has been constructed:
+$$u(x,t)=\left\{\begin{array}{cc}
+&\sin(\omega_1 x) e^{-\beta^- \omega_1^2 t}, \;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;
+\;\phi \leq 0 \\
+&\sin(\omega_2 - \omega_2 \alpha) e^{-\beta^+ \omega_2^2 t},\;\;\;\;
+{\rm otherwise}
+\end{array}\right.$$
+Hence, the moving interface $\alpha(t)$ is determined from the scalar equation $$\sin(\omega_1 \alpha) e^{-\beta^- \omega_1^2 t} = \sin(\omega_2 - \omega_2 \alpha) e^{-\beta^+ \omega_2^2 t}$$
+This equation has a unique solution in the range $\pi < \omega_1 < 2 \pi$ and $\pi < \omega_2 < 2 \pi$. Plot in Fig. \ref{1D_interface_ex-1} shows how $\alpha (t)$ moves with time for $(\beta^-,\beta^+) = (5,1)$ on a uniform grid.
+\begin{figure}[htbp]
+\centering
+  \begin{minipage}[t]{0.45\linewidth}
+  \subfigure[]{
+    \includegraphics[width=\linewidth]{time_vs_alfa_1D.eps}
+    \label{1D_interface_ex-1}}
+   \end{minipage}
+  %\hspace{0.5cm}
+   \begin{minipage}[t]{0.45\linewidth}
+  \subfigure[]{
+    \includegraphics[width=\linewidth]{1d_heat_grid-80_t_0-0-1.eps}
+    \label{1D_solution_ex-1}}
+   \end{minipage}
+  \caption{(a) Moving interface $\alpha (t), 0 \leqslant t \leqslant 1$ and (b) Profile of the numerical solution $u(x,t)$ for $n = 80$, $(\beta^-,\beta^+) = (5,1)$. }
+  \label{1D_ex-1}
+ \end{figure}
+
+\begin{table}[htbp]
+\caption{\small Infinity norm of the error at all grid points for CN and HOC scheme.}
+\begin{center}
+%\begin{small}
+%\begin{tiny}
+\begin{tabular}{cccccc}  \hline
+ &  \multicolumn{2}{c}{CN} & & \multicolumn{2}{c}{HOC}   \\ \cline{2-3} \cline{5-6}
+N & $L_\infty$ error & order & & $L_\infty$ error & order \\ \hline
+20  & $8.9789 \times 10^{-3}$ & & &$1.8287 \times 10^{-3}$ &    \\
+    & 	&  1.9580 &	&				  & 2.0437    \\
+40  & $2.3109 \times 10^{-3}$ & & & $4.4354 \times 10^{-4}$ &    \\
+      & 	 & 2.0045 &	&				  & 2.1651 \\
+80 & $5.7590 \times 10^{-4}$ & & & $9.8891 \times 10^{-5}$ &  \\
+      & 	 & 1.9668 &	&				  & 2.0976 \\
+160 & $1.4732 \times 10^{-4}$ & & & $2.3104 \times 10^{-5}$ &  \\  \hline
+\end{tabular}
+%\end{tiny}
+%\end{small}
+\end{center}
+\label{table_1D_ex-1}
+\end{table}
+
+We solve this non linear moving interface problem for jumps in coefficients and its derivatives both, taking $(\beta^-,\beta^+) = (5,1)$. Fig. \ref{1D_interface_ex-1} shows how interface moves along the grid points with time. It can be seen that the interface crosses more than one grid point within a small time interval. Plot of the computed solution $u(x,t)$ for different times is shown in Fig. \ref{1D_solution_ex-1}. Table \ref{table_1D_ex-1} shows the grid refinement analysis for both CN and HOC scheme. It is clear that order of accuracy of HOC scheme is more (greater than two for all the cases) than CN scheme.
+
+Example 2: Two phase Stefan problem in one dimension. This example has been adapted from \cite{li-heat1997}. The governing heat equation in 1D is
+$$C_i \frac{\partial u_i}{\partial t} = k_i \frac{\partial^2 u_i}{\partial x^2}, i =1,2 $$ and on $x = \alpha (t)$
+$$u_1 = u_2 = 0; \quad \sigma \frac{\partial \alpha}{\partial t} = k_1 \frac{\partial u_1}{\partial x} - k_2 \frac{\partial u_2}{\partial x} $$ where the thermal properties are: $k_i$ is conductivity; $C_i = c_i \rho$ where $c_i$ is specific heat and $\rho$ is the density; $\sigma = L \rho$ where $L$ is the latent heat. Subscript $i = 1$ denotes the region in phase 1 ie. $0 < x < \alpha (t)$ (ice) and $i = 2$ denotes the region in phase 2 ie. $\alpha (t) < x < 1$ (water). The solution $u$ represents the temperature and exact solution of the problem is given by $$\alpha (t) = 2 \phi \sqrt{\kappa_1 t},$$
+$$u_1 (x,t) = u^* \left\lbrace 1 - \frac{\text{erf}(x/2\sqrt{\kappa_1 t})}{\text{erf} \phi}\right\rbrace,$$
+$$u_2 (x,t) = u_0 \left\lbrace 1 - \frac{\text{erfc}(x/2\sqrt{\kappa_2 t})}{\text{erfc} (\phi\sqrt{\kappa_1/\kappa_2})} \right\rbrace.$$
+Here $\kappa_i = K_i/C_i$, erf$(x)$ is the error function, $u^*$ and $u_0$ are constants, and $\phi$ satisfies the transcendental equation
+$$\frac{e^{-\phi^2}}{\text{erf} \phi} + \frac{k_2}{k_1} \sqrt{\frac{\kappa_1}{\kappa_2}} \frac{u_0 e^{-\kappa_1 \phi^2 /\kappa_2}}{u^* \text{erfc} (\phi\sqrt{\kappa_1/\kappa_2})} + \frac{\phi \lambda \sqrt{\pi}}{C_1 u^*} = 0.$$ Initial and boundary conditions can be determined from the exact solution of this equation. The following values of thermal coefficients are used. $$k_1 = 2.22, \quad k_2 = 0.556, \quad C_1 = 1.762, \quad C_2 = 4.226, \quad \sigma = 338$$ with $u^* = -20$ and $u_0 = 10$.
+
+\begin{figure}[htbp]
+\centering
+  \begin{minipage}[t]{0.45\linewidth}
+  \subfigure[]{
+    \includegraphics[width=\linewidth]{alfa_vs_time_stefan.eps}
+    \label{1D_interface_ex-2}}
+   \end{minipage}
+  %\hspace{0.5cm}
+   \begin{minipage}[t]{0.45\linewidth}
+  \subfigure[]{
+    \includegraphics[width=\linewidth]{stefan_grid-80_t_0-6-1-0.eps}
+    \label{1D_solution_ex-2}}
+   \end{minipage}
+  \caption{(a) Moving interface $\alpha (t), 0.5 \leqslant t \leqslant 1$ and (b) Profile of the numerical solution $u(x,t)$ for $n = 80$. }
+  \label{1D_ex-2}
+ \end{figure}
+
+\begin{table}[htbp]
+\caption{\small Infinity norm of the error at all grid points for CN and HOC scheme.}
+\begin{center}
+%\begin{small}
+%\begin{tiny}
+\begin{tabular}{cccccc}  \hline
+ &  \multicolumn{2}{c}{CN} & & \multicolumn{2}{c}{HOC}   \\ \cline{2-3} \cline{5-6}
+N & $L_\infty$ error & order & & $L_\infty$ error & order \\ \hline
+20  & $3.4546 \times 10^{-3}$ & & &$1.4225 \times 10^{-3}$ &    \\
+    & 	&  1.9543 &	&				  & 2.0426    \\
+40  & $8.9143 \times 10^{-4}$ & & & $3.4526 \times 10^{-4}$ &    \\
+      & 	 & 1.8854 &	&				  & 2.0680 \\
+80 & $2.4126 \times 10^{-4}$ & & & $8.2341 \times 10^{-5}$ &  \\
+      & 	 & 1.9674 &	&				  & 2.0735 \\
+160 & $6.1692 \times 10^{-5}$ & & & $1.9562 \times 10^{-5}$ &  \\  \hline
+\end{tabular}
+%\end{tiny}
+%\end{small}
+\end{center}
+\label{table_1D_ex-2}
+\end{table}
+
+The second 1D example is from real life application. This is a classical problem in tracking a freezing front of ice in water.
+Movement of interface $\alpha (t)$ with respect to the grid in shown in Fig. \ref{1D_interface_ex-2} and the numerical solution is plotted in Fig. \ref{1D_solution_ex-2}. Table \ref{table_1D_ex-2} shows the grid refinement analysis for both CN and HOC schemes. This again confirms the higher order accuracy of HOC scheme.
+
+Example 3: A two dimensional moving interface problem is now considered defined by
+$$u_t - \nabla.(\beta \nabla u) = f(x,y,t), \quad \quad (x,y) \in \Omega, t \in (0, T] $$ where $\Omega = [-1,1] \times [-1,1]$. The exact solution is given as
+$$u(x,y,t)=\left\{\begin{array}{cc}
+&\displaystyle \frac{1}{\beta^-}(x^2+y^2)^{5/2} \cos (t), \;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;
+\;\phi \leq 0 \\
+&\displaystyle \frac{1}{\beta^+}(x^2+y^2)^{5/2} \cos (t) + \left(\frac{1}{\beta^-}-\frac{1}{\beta^+} \right) r(t)^5 \cos (t),\;\;\;\;
+{\rm otherwise}
+\end{array}\right.$$ The interface $\Gamma (t)$ is a moving circle centered at origin with radius $r(t)$ given by $$\displaystyle r(t) = r_\circ \left(\frac{\sin (t) + 3}{4} \right)$$ and $\displaystyle r_\circ = \frac{\pi}{6.28}.$
+
+\begin{table}[htbp]
+\caption{\small Infinity norm of the error at all grid points for CN and HOC scheme.}
+\begin{center}
+%\begin{small}
+%\begin{tiny}
+\begin{tabular}{cccccc}  \hline
+ &  \multicolumn{2}{c}{CN} & & \multicolumn{2}{c}{HOC}   \\ \cline{2-3} \cline{5-6}
+N & $L_\infty$ error & order & & $L_\infty$ error & order \\ \hline
+20  & - & & &- &    \\
+    & 	&  - &	&				  & -    \\
+40  & $3.0432 \times 10^{-3}$ & & & $2.8265 \times 10^{-3}$ &    \\
+      & 	 & 2.0234 &	&				  & 2.0938 \\
+80 & $7.4851 \times 10^{-4}$ & & & $3.7769 \times 10^{-4}$ &  \\
+      & 	 & 1.9812 &	&				  & 2.1172 \\
+160 & $1.8957 \times 10^{-4}$ & & & $8.7051 \times 10^{-5}$ &  \\  \hline
+\end{tabular}
+%\end{tiny}
+%\end{small}
+\end{center}
+\label{table_2D_ex-1}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+  \begin{minipage}[t]{0.45\linewidth}
+  \subfigure[]{
+    \includegraphics[width=\linewidth]{2D_interface_motion_ex-1.eps}
+    \label{2D_interface_ex-1}}
+   \end{minipage}
+  %\hspace{0.5cm}
+   \begin{minipage}[t]{0.45\linewidth}
+  \subfigure[]{
+    \includegraphics[width=\linewidth]{surface_2D_ex-1_t_0-1.eps}
+    \label{2D_surface_ex-1}}
+   \end{minipage}
+  \caption{(a) Moving interface $\alpha (t), 0 \leqslant t \leqslant 0.1$ and (b) Profile of the numerical solution $u(x,y,t)$ for $80 \times 80$ grid, $(\beta^-,\beta^+) = (1,2)$. }
+  \label{2D_solution_ex-1}
+\end{figure}
+
+We now consider a two dimensional case with discontinuous coefficients across a circular interface whose radius is a function of time.  Fig. \ref{2D_interface_ex-1} shows various stages of the circular interface at different time intervals from $t = 0$ to $t = 1$. Surface plot in Fig. \ref{2D_solution_ex-1} shows the numerical solution $u(x,y,t)$ computed by using HOC for the case $(\beta^-,\beta^+) = (1,2)$ on $80 \times 80$ grid. Table \ref{table_2D_ex-1} again shows second order accuracy for the HOC scheme and the infinity error norms are much better than that of CN.
+
+\section{Conclusion}
+In this chapter, the immersed interface idea developed in previous chapter has been extended to solve problems in domains with discontinuities due to the presence of time dependent moving interfaces. Results of Crank-Nicolson scheme are compared with the recently developed HOC scheme. HOC scheme is found to produce better order of accuracy than C-N as expected. The examples considered in this chapter are for validation purposes only as we wanted to show the efficacy of our newly developed idea in solving moving interface problems also. The implementation of this idea to simulate the motion of a stretched elastic membrane and a rising bubble in the liquid is in process. The results will be reported in the future.
+
+\clearpage 

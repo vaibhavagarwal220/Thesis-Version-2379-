@@ -1,0 +1,56 @@
+%\clearpage
+%\thispagestyle{empty}
+%~\clearpage
+%\graphicspath{{Figures_chapter-5/}}
+%\chapter{New Finite Difference Scheme Involving Interfacial Points For Solving Moving Interface Problems}
+\chapter{Logic}
+\label{chap5_logic}
+\subsection{SAR register logic}
+The successive approximation register is responsible for generating clocks for sampling, switching of capacitors and delivering the output. In most simple form, SAR logic is a ring counter. 
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.7\columnwidth]{sar.eps}
+	\caption{An example of the SAR digital block\cite{34}.}
+	\label{SA}
+\end{figure}
+Initially, after sampling the first flip-flop of ring counter is set. It, in turn, sets the MSB. In the next clock cycle, second flip-flop is set, and based on the comparator output, first flip-flop of second row is either set or reset. This process continues, untill all the bits are set once.
+
+This block is generally modelled as an Finite State Machine and is implemented in verilog. Note that the asynchronous register can be used to save the power\cite{34}.
+
+\section{Implementation}
+\subsection{SAR logic}
+The SAR Logic defines the actual operation of the ADC. It is responsible for the clock generation for various blocks of the ADC, memory and switch control of the DAC. To improve the performance of the ADC, an asynchronous SAR logic is adopted. The data ready signal from the comparator is used in the design of asynchronous SAR logic. A block diagram of the digital logic is shown in Figure~\ref{digital}.
+\begin{figure}[!htb]
+	
+	\begin{center}
+		\centering
+		\includegraphics[width= \columnwidth]{digital}
+		\caption{Block diagram of the implemented digital logic.}
+		\label{digital}
+	\end{center}
+	
+\end{figure}
+
+
+Figure~\ref{time} shows the timing diagram with clock, sampling, switch, compare, and end-of-conversion~(EOC) as digital control signals. The clock signal shows three cycles annotated on the signal. %It shows the sampling phase, switching phase and conversion phase of the operation.
+Sampling of the input signal and generation of reference levels for the first comparison takes place in the first~cycle. The conversion for first 3 most significant bits~(MSBs) and generation of reference levels for the next 3 bits takes place in the second cycle. The next 3 bits are generated in the third cycle. The EOC pulse declares the end of conversion and shows availability of 6-bits of digital output.
+
+\begin{figure}[!htb]
+	
+	\begin{center}
+		\centering
+		\includegraphics[width= \columnwidth]{TIMING}
+		\caption{Timing diagram of the hybrid flash-SAR ADC.}
+		\label{time}
+	\end{center}
+	
+\end{figure}
+
+The digital logic block functions as shown in the flow-chart of Fig.~\ref{flow}.
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width = \columnwidth]{flow}
+	\caption{The working of digital logic in the form of a flow-Chart.}
+	\label{flow}
+\end{figure}
+\clearpage 

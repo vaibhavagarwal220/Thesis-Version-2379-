@@ -1,0 +1,794 @@
+\clearpage
+\thispagestyle{empty}
+~\clearpage
+\graphicspath{{Figures_chapter-2/}}
+\chapter{Numerical Investigation of Vortex shedding from a Rotationally Oscillating Circular Cylinder Using an HOC Scheme}
+\label{chap2}
+%\pagenumbering{arabic}
+
+\section{Introduction}
+Viscous flow past  a bluff body has long been appreciated owing mainly to its theoretical and practical implications. Vorticity is generated close to the solid surface because of  the no slip boundary conditions. The occurrence of this flow phenomenon together with the wake structure give rise to enhanced unsteadiness, pressure fluctuations, structural vibrations and noise in addition to increased heat and mass transfer. Attempts to find ways to control or lessen the unfavorable behavior associated with the formation and shedding of these vortices remains to be one of the most intriguing problems in computational fluid dynamics. Since most of the bluff bodies used in engineering and other applications are circular cylinders, they warranted this in-depth treatment. In general, simple geometrical configurations have been employed, for example, yawed cylinders \cite{ramberg1978,powell1917}, use of end plates \cite{ramberg1978}, elliptic cross section \cite{dennis2003}, tandem arrangements \cite{tatsuno1983}. Much of the prior work has dealt with the direct perturbation methods also such as inhomogeneous inlet flow \cite{gaster1971,sengupta2009}, rotatory motion \cite{cheng1995,ray2010}, transverse oscillations \cite{blackburn1999,zdravkovich1997}, surface vibrations \cite{berger1967,wehrann1965}. These observations are well known and have been documented by many investigators. A literature survey reveals that though much of the earlier studies have been made in the case of a rotationally oscillating circular cylinder, both numerically and experimentally, but still there are many aspects to be clarified in this regard. The distinct feature of this rotatory oscillatory motion is that around the long axis, the moving surfaces perform an alternate periodic motion, which consists of an alternate acceleration and deceleration between the fixed angular amplitude.
+
+
+An initiating numerical simulation of laminar flow past a rotatory oscillating cylinder was reported by Okajima,Takata and Asanuma \cite{takata1975} in $1975$ using unsteady, two dimensional Navier-Stokes equations for a moderate $Re$. Their results show that no periodic wake is found behind a stationary cylinder for $Re = 40$, but for the same $Re$ and forced oscillating frequency $S_f$= $0.11$, forced periodic oscillation triggers a periodic wake in the near flow. Taneda \cite{taneda1978} has suggested a tentative topology for such a motion in his paper in $1978$. His experiments exhibit that vortex shedding could be nearly eliminated at very high oscillation frequencies. By means of flow visualization methods at $30 \leq Re \leq 300$  and $S_f$ between $0$ and $55$, he concluded that the dead water region reduces as the frequency of the oscillation increases at some critical Strouhal number, and this critical Strouhal number is independent of $Re$ but approximately proportional to the reciprocal of angular amplitude of oscillation. Tokumaru and Dimotakis \cite{tokumaru1991} in $1991$ examined the efficacy of forced rotatory oscillations on a cylinder at a moderate $Re$ of $15000$ for the purpose of controlling the unsteady separated flows in its wake using flow visualizations as well as Laser Doppler velocity measurements. Their experiments prove that rotational oscillations at very large magnitudes can produce significant reduction in drag on the cylinder surface. They also concluded that working in a controlled domain in which vortex shedding is synchronous with the forcing parameters provides greatest control authority over the wake structure. Later on in $1996$, Lu and Sato \cite{lu1996} investigated the vortex formation and shedding in a wide regime of parameters as oscillating rotational magnitude $\alpha_m$ ranging from $0.1$ to $0.3$ and oscillating frequency ratio $S_e$ which is equal to $S_f/S_\circ$, taking values $0.5, 1.0, 2.0, 3.0$ and $4.0$ at three different $Re$ values $200,1000$ and $3000$. Here $S_f$ is the forced oscillating frequency of the cylinder and $S_\circ$ is the vortex shedding frequency for flow past a stationary cylinder. Numerical simulations were carried out by solving primitive variable form of Navier-Stokes equations using a fractional step method accounting that large scale vortex structures in the near wake are nearly the same for $Re$ = $200, 1000$ and $3000$. Baek and Sung \cite{baek1998} in $1998$ portrayed the unsteady dynamics of wake using similar method at oscillation frequencies in the regime $0.110$ to $0.220$ and maximum amplitude of rotation $ \theta_{\text{max}}$ taking values $15, 13$ and $60$ degrees at $Re~=~110$. They further categorized them into ``lock-on" and ``non lock-on" states with an extension to primary, secondary and tertiary lock-on states depending on the behavior of vortex shedding \cite{baek2000}.
+In the very next year, D. Shiels and Leonard \cite{shiels2001} probed into the efficiency of rotational control for drag reduction over $Re$ as high as $15000$. High resolution viscous vortex method was used verifying the Tokumaru and Dimotakis \cite{tokumaru1991} observations of drag reduction. Chang et al. in $2001$ applied hybrid vortex method previously presented in their work \cite{cheng2001,  cheng1995} to investigate the influence of oscillating amplitude and forcing frequency in both ``lock-on" and ``non-lock on" regimes on the wake structures, pressure distributions and other forces on the cylinder at $Re$ = $1000$. Srinivas and Fujiswa \cite{srinivas2003} in $2003$ examined the influence of various flow parameters namely non dimensional oscillation frequencies ranging between $0.1$ and $2.0$, rotational amplitude varying from $0.25$ to $3.0$ and $30 \leq Re \leq 3000$ using unsteady Reynolds averaged Navier-Stokes equations combined with $k-\epsilon$ model of turbulence. Their results demonstrate that peak value of fluid forces on circular cylinder increases abruptly when forcing frequency is in the vicinity of vortex shedding frequency. It is followed by reduction in drag and lift at higher frequencies, which reaches a large magnitude at non dimensional oscillation frequency around $1$ and at rotational amplitude larger than $1$. The former phenomenon is found to be  promoted with the increasing $Re$ while the latter is almost independent of $Re$ in above range. Fujisawa and Asano \cite{fujisawa2005} in $2005$ analyzed the outcome of rotational oscillations on fluid forces of a circular cylinder in a uniform flow by three dimensional large eddy simulations at $Re = 2000$ establishing their equivalence with experimental particle image velocimetry results. Spectral finite difference method was used by Mdallal and Kocabiyik \cite{qasem2006} in $2006$ at $Re = 855$ over various oscillating amplitudes $\theta_{\text{max}}$ ranging from  $\pi/2$ to $5\pi/2 $ and oscillating frequency ratio $S_f/S_\circ$ taking values $0.5, 1, 2, 3$ and $4$. They pointed out that stepping up the amplitude of rotatory oscillation reduces the period of vortex shedding while stepping up the frequency ratio increases it. Haji and Janajrich \cite{haji2008} in $2008$ presented an analytical model for lift on a rotationally oscillating cylinder in the lock on regime at $Re = 1000$ and proved its robustness for modeling vortex induced vibrations, drag reduction and lift augmentation. Hence, this class has attracted a great deal of research due to the highly complex flow structure.
+
+In this chapter, we study the vortex shedding phenomena for flow past a rotationally oscillating circular cylinder for $Re=200$ and 500, at the initial stages and for the fully developed flows, for different $S_e$ and $\alpha_m$ values, where $S_e$ denotes dimensionless forced oscillating frequency ratio $S_f/S_\circ$ and $\alpha_m$ is the dimensionless peak rotation rate.
+%$S_f$ is the forced oscillating frequency of the cylinder and $S_\circ$ is the frequency of the vortex shedding for flow past a stationary cylinder.
+%The temporal behavior of vortex formation and relevant streamline patterns are studied over broad ranges of dimensionless forced oscillating frequency ratio ($S_e$), ranging from $0.1$ to $2.0$ and dimensionless peak rotation rate ($\alpha_m$), ranging from $0.5$ to $10.0$ for the Reynolds number $200$.
+We use higher order compact (HOC) technique for solving streamfunction-vorticity formulation ($\psi-\omega$) of unsteady two-dimensional Navier-Stokes equations on non-uniform polar grids. The accuracy and reliability of the HOC formulation has already been ascertained in the case of flow past a circular cylinder and its rotating counterpart (\cite{kalita2009, ray2014}).
+%We first check the grid and temporal independence of our computed results and validate our scheme by comparing our results with existing experimental and standard numerical results for different $Re$ values. After that we study and analyze our main results for $Re = 200$ with different $S_e$ and $\alpha_m$ values. In this process, we study streaklines and vorticity contours, lift and drag coefficients and their power spectra, $u$-velocity profiles along $\theta = 0^\circ$ line, $v$-velocity profiles along $\theta = 90^\circ$ line  and solid surface vorticity. Our computed results highlight many new things which are not yet reported.
+
+%There is a basic difference between present case and the previous two cases (Kalita and Ray, 2009; Ray, 2010). In the case of unsteady flow past an impulsively started circular cylinder, only one externally specified parameter (i.e., $Re$) was involved. In the case of flow past rotating and translating circular cylinder, two externally specified parameters(i.e., $Re$ and $\alpha$) were involved and both of them had constant values. On the other hand, present case deals with three externally specified parameters namely $Re$, $\alpha_m$ and $S_e$. Not only that, the rotational oscillation of the cylinder $\alpha(t)$ (i.e. the no slip boundary condition) is a function of time and it can be written in dimensionless form as $ \alpha(t) = \alpha_m \sin 2 \pi S_et$, where $S_e$ denotes dimensionless forced oscillating frequency ratio $S_f/S_\circ$ and $\alpha_m$ is the dimensionless peak rotation rate. $S_f$ is the forced oscillating frequency of the cylinder and $S_\circ$ is the frequency of the vortex shedding for flow past a stationary cylinder. These make present HOC formulation more complex and challenging.
+
+The chapter is arranged in the following sequence. In section $2.2$, we discuss about the governing equations and their numerical discretizations along with initial and boundary conditions. Section $2.3$ deals with numerical results and discussion. At the end, we summarize our observations in the conclusions in section $2.4$.
+
+\section{Governing Equations and Discretization}
+We consider the unsteady, incompressible viscous flow over an infinitely long cylinder of circular cross section of radius $R_\circ$. The fluid at infinity has a uniform stream with velocity $ U_\infty = 1 $ and the cylinder is subjected to rotational oscillations about its axis. It is supposed that uniform translation and rotational oscillation of the cylinder start impulsively at the same instant. A schematic diagram of the present problem is shown in Fig \ref{schematic_diagram-cylinder-1}.
+\begin{figure}[htbp]
+\centering
+{\includegraphics[width=\textwidth]{schematic_diagram.eps}}
+\caption{\small Schematic diagram of the flow domain.}
+\label{schematic_diagram-cylinder-1}
+\end{figure}
+In dimensionless form, the equations of motion can be written in terms of stream function $(\psi)$ and vorticity $(\omega)$. In cylindrical polar coordinates $(r,\theta)$ these equations read
+\begin{equation}
+\label{vorticity_nv-1}
+\frac{\partial^2 \omega}{\partial r^2} + \frac{1}{r}\frac{\partial \omega}{\partial r } + \frac{1}{r^2} \frac{\partial^2 \omega}{\partial \theta^2} = Re \left\lbrace u \frac{\partial \omega}{\partial r} + \frac{v}{r} \frac{\partial \omega}{\partial \theta} + \frac{\partial \omega}{\partial t}\right\rbrace,
+\end{equation}
+
+\begin{equation}
+\label{stream_fn_nv-1}
+\frac{\partial^2 \psi}{\partial r^2} + \frac{1}{r} \frac{\partial \psi}{\partial r} + \frac{1}{r^2} \frac{\partial^2 \psi}{\partial \theta^2} = -\omega.
+\end{equation}
+where $u$ and $v$ are the radial and tangential velocity components, respectively and $t$ is the non dimensional time. Velocity components $u$ and $v$ are related to $\psi$ as
+\begin{equation}
+u = \frac{1}{r} \frac{\partial \psi}{\partial \theta}\quad and \quad v = - \frac{\partial \psi}{\partial r},
+\end{equation}
+and vorticity $\omega$ is given by
+\begin{equation}
+\omega = \frac{1}{r} \left[ \frac{\partial }{\partial r}  \left( vr \right) - \frac{\partial u}{\partial \theta} \right].
+\end{equation}
+
+For the numerical discretization of the governing equations, we construct a non-uniform polar mesh in the annular region $\displaystyle{\Omega=[R_{0},
+R_{\infty}] \times [0,2\pi]}$ by the grid points $(r_i,\theta_j)$ clustering around the surface of the cylinder. Such a grid has been generated with the help of the stretching function $\displaystyle r_i = \exp \left( \frac{\lambda \pi i}{i_{max}} \right)$ with $\lambda$ determining the outer radius of the computational domain.
+%The details of the HOC discretization can be found in \cite{kalita2009, ray2010}.
+HOC formulation on non uniform polar grids is used for discretization, which (for Eqs. (\ref{vorticity_nv-1}) and (\ref{stream_fn_nv-1}) respectively) at $\left( i, j \right) ^{th}$ point is given by
+\begin{eqnarray}
+\big[ A{11}_{i,j}\delta r^2\delta\theta^2 + A{12}_{i,j}\delta r^2\delta\theta + A{13}_{i,j}\delta r \delta \theta ^2 + A{14}_{i,j} \delta r^2  +  A{15}_{i,j} \delta \theta ^2 +  A{16}_{i,j} \delta r \delta \theta  + A{17}_{i,j} \delta r \nonumber\\ +  A{18}_{i,j} \delta \theta \big] \omega_{i,j}^{n+1} = \big[ A{21}_{i,j}\delta r^2\delta\theta^2 + A{22}_{i,j}\delta r^2\delta\theta + A{23}_{i,j}\delta r \delta \theta ^2 + A{24}_{i,j} \delta r^2 \nonumber\\ +  A{25}_{i,j} \delta \theta ^2  +  A{26}_{i,j} \delta r \delta \theta + A{27}_{i,j} \delta r +  A{28}_{i,j} \delta \theta \big] \omega_{i,j}^{n} \label{hoc_cylinder-1}
+\end{eqnarray}
+and
+\begin{eqnarray}
+\big[ B{1}_{i,j}\delta r^2\delta\theta^2 + B{2}_{i,j}\delta r^2\delta\theta + B{3}_{i,j}\delta r \delta \theta ^2 + B{4}_{i,j} \delta r^2  +  B{5}_{i,j} \delta \theta ^2  \nonumber\\ +  B{6}_{i,j} \delta r \delta \theta  + B{7}_{i,j} \delta r +  B{8}_{i,j} \delta \theta \big] \psi_{i,j}^{n} = G_{i,j} \label{hoc_cylinder-2}
+\end{eqnarray}
+where $A11_{i,j}$, $A{12}_{i,j}, \cdots , A17_{i,j}$; $A21_{i,j}$, $A{22}_{i,j}, \cdots , A27_{i,j}$ and $B1_{i,j}$, $B{2}_{i,j}, \cdots , B7_{i,j}$ are functions of $r$ and $\theta$. $\delta r$ and $\delta r^2$ are the first and second order central difference operators respectively. $\delta \theta$ and $\delta \theta ^2$ are defined in a similar way. The details of discretization leading to equations (\ref{hoc_cylinder-1}) and (\ref{hoc_cylinder-2}), their respective coefficients and the finite difference operators used can be found in \cite{ray2010}.
+
+\subsection*{Initial and boundary conditions}
+The initial conditions are taken as
+\begin{equation}
+\omega (r,\theta,0) = 0 \quad \text{at} \quad R_\circ \leq r \leq \infty, \quad 0 \leq \theta \leq 2\pi \quad \text{and}
+\end{equation}
+\begin{equation}
+(u(r,\theta, t), v(r,\theta,t)) = (u_\infty(r, \theta, t),v_\infty(r,\theta, t))\quad \text{as} \quad r \rightarrow \infty, \quad 0 \leq \theta \leq 2\pi
+\end{equation}
+
+%Implementation of boundary conditions
+On the surface of the cylinder, i.e., at $r = R_\circ$, we have
+\begin{equation}
+(u(r,\theta,t), v(r,\theta,t)) = (0,\alpha (t)), \quad \text{for} \quad 0 \leq \theta \leq 2\pi
+\end{equation}
+\begin{equation}
+\label{stream_fn_alpha}
+\psi(r,\theta , t)=0, \quad \frac{\partial \psi}{\partial r}(r,\theta , t)= -\alpha (t) \quad 0 \leq \theta \leq 2\pi
+\end{equation}
+
+At the far stream $r = R_\infty$ we consider
+\begin{equation}
+\label{stream_fn_bc}
+\psi(r,\theta , t)= \left(r - \frac{R_\circ^2}{r} \right) \sin \theta , \quad \frac{\partial \psi}{\partial r}(r,\theta , t) = \left(1 + \frac{R_\circ^2}{r^2} \right) \cos \theta \quad 0 \leq \theta \leq 2\pi \quad
+\end{equation}
+
+The numerical implementation of boundary conditions for stream function and velocities is straight forward and vorticity at the far field is zero. But, we need to approximate the condition to be imposed for vorticity on the surface of cylinder. Using the relations (\ref{stream_fn_nv-1}) and (\ref{stream_fn_alpha}), we have at $r = R_\circ$
+\begin{equation}
+\label{vorticity_bd}
+\omega (r, \theta , t) = \frac{\alpha (t)}{r} - \frac{\partial^2 \psi (r, \theta , t)}{\partial r^2}, \quad  0 \leq \theta \leq 2\pi.
+\end{equation}
+%The details of discretization process to obtain a compact approximation of the vorticity on the solid boundary can be found in \cite{ray2011}.
+
+We now proceed to derive a compact approximation of vorticity on the solid boundary (surface of cylinder) \cite{ray2011}. We assume that the above conditions for vorticity also hold for all $r$ in a very small neighborhood of $R_\circ$. Hence, we are in a position to consider a very small neighborhood of $R_\circ$ for further deduction of boundary conditions on the surface of cylinder. Successively differentiating Eq. (\ref{vorticity_bd}) w.r.t $r$ gives\\
+\begin{equation}
+\label{alpha_diff}
+\frac{\partial^3 \psi}{\partial r^3} = -\frac{\alpha}{r^2} - \frac{\partial \omega}{\partial r}\quad \text{and} \quad
+\frac{\partial^4 \psi}{\partial r^4} = \frac{2\alpha}{r^3} - \frac{\partial^2 \omega}{\partial r^2}.
+\end{equation}
+Above equation implies that $\psi$ is analytic in a small neighborhood of $R_\circ$ which allows its expansion by a Taylor series about $R_\circ$. Assuming that $r_i$ is the radial distance of the $i^{th}$ point from the surface, we get by Taylor series expansion\\
+\begin{equation}
+\alpha = -\frac{\partial \psi}{\partial r} \bigg|_{0,j} = - \delta_r \psi_{0,j} + \frac{r_1}{2} \frac{\partial^2 \psi}{\partial r^2} \bigg|_{0,j} + \frac{r_1^2}{6} \frac{\partial^3 \psi}{\partial r^3} \bigg|_{0,j} + \frac{r_1^3}{24} \frac{\partial^4 \psi}{\partial r^4} \bigg|_{0,j} + O(r^4_1).
+\end{equation}
+Substituting the values from Eqs. (\ref{stream_fn_alpha}) and (\ref{alpha_diff}) we get
+\begin{eqnarray}
+\alpha = -\frac{\partial \psi}{\partial r} \bigg|_{0,j} = - \delta_r \psi_{0,j} + \frac{r_1}{2} \left\lbrace \frac{\alpha}{r} - \omega \right\rbrace \bigg|_{0,j} + \frac{r_1^2}{6} \left\lbrace  -\frac{\alpha}{r^2} - \frac{\partial \omega}{\partial r} \right\rbrace \bigg|_{0,j} \nonumber\\ + \frac{r_1^3}{24} \left\lbrace \frac{2\alpha}{r^3} - \frac{\partial^2 \omega}{\partial r^2} \right\rbrace \bigg|_{0,j} + O(r_1^4).
+\end{eqnarray}
+Finally we are able to derive a fourth order accurate expression for $\alpha$ given as
+\begin{equation}
+\label{alpha_approx}
+\alpha = - \delta_r \psi_{0,j} + \frac{\alpha r_1}{2 R_\circ} - \frac{\alpha r_1^2}{6R_\circ^2} + \frac{\alpha r_1^3}{12 R_\circ^3} - \left\lbrace \frac{r_1 \omega}{2} + \frac{r_1^2}{6} \frac{\partial \omega}{\partial r} + \frac{r_1^3}{24} \frac{\partial^2 \omega}{\partial r^2} \right\rbrace \bigg|_{0,j} + O(r^4_1).
+\end{equation}
+Taking advantage of the fact that $u = 0$ and $v = \alpha$ on the solid surface, we can find out an expression for the highest order derivative of $\omega$ w.r.t $r$ from  Eq. (\ref{vorticity_nv-1}) as
+\begin{equation}
+\frac{\partial^2 \omega}{\partial r^2} = -\frac{1}{r}\frac{\partial \omega}{\partial r } - \frac{1}{r^2} \frac{\partial^2 \omega}{\partial \theta^2} + Re \left\lbrace \frac{\alpha}{r} \frac{\partial \omega}{\partial \theta} + \frac{\partial \omega}{\partial t}\right\rbrace.
+\end{equation}
+We are able to simplify Eq. (\ref{alpha_approx}) as:
+%\begin{equation}
+%\begin{eqnarray}
+%%\begin{split}
+%\alpha = - \delta_r \psi_{0,j} + \frac{\alpha r_1}{2 R_\circ} - \frac{\alpha r_1^2}{6R_\circ^2} + \frac{\alpha r_1^3}{12 R_\circ^3}
+% - \frac{r_1 \omega}{2}\bigg|_{0,j}- \frac{r_1^2}{6} \frac{\partial \omega}{\partial r}\bigg|_{0,j} \nonumber\\
+% - \frac{r_1^3}{24} \left[ -\frac{1}{r}\frac{\partial \omega}{\partial r }
+% - \frac{1}{r^2} \frac{\partial^2 \omega}{\partial \theta^2}
+% + Re \left\lbrace \frac{\alpha}{r} \frac{\partial \omega}{\partial \theta}
+%  + \frac{\partial \omega}{\partial t}\right\rbrace \right] \bigg|_{0,j} + O(r^4_1).
+%% \end{split}
+%\end{eqnarray}
+%\end{equation}
+\begin{eqnarray}
+%\begin{split}
+\alpha = - \delta_r \psi_{0,j} - \frac{r_1}{2} \omega_{0,j} + \left\lbrace \frac{r_1^3}{24R_\circ} - \frac{r_1^2}{6} \right\rbrace \frac{\partial \omega}{\partial r} \bigg|_{0,j} - \frac{r_1^3 Re}{24} \frac{\partial \omega}{\partial t} \bigg|_{0,j} + \frac{r_1^3 Re}{24r^2} \frac{\partial^2 \omega}{\partial \theta^2} \bigg|_{0,j} \nonumber\\ - \frac{r_1^3 Re \alpha}{24R_\circ} \frac{\partial \omega}{\partial \theta} \bigg|_{0,j} + \frac{r_1 \alpha}{2 R_\circ} - \frac{r_1^2 \alpha}{6 R_\circ^2} + \frac{r_1^3 \alpha}{12 R_\circ^3} \nonumber
+%\end{split}
+\end{eqnarray}
+Using forward difference for the temporal derivative and second order one sided difference for the derivatives along $r$-direction, we are finally able to approximate the boundary condition for vorticity at the solid boundary as
+%\begin{equation}
+\begin{eqnarray}
+\omega^{n+1}_{0,j} = \frac{24\Delta t}{r_1^3 Re} \bigg[ \left\lbrace \frac{r_1^3 Re}{24 \Delta t} - \frac{r_1}{2} - \left( \frac{r_1^3}{24 R_\circ} - \frac{r_1^2}{6} \right)\left( \frac{(r_2 - R_\circ)^2 - r_1^2}{r_1(r_2-R_\circ)(r_2)-r_1} \right) - \frac{r_1^3}{12R_\circ^2 (\Delta \theta )^2} \right\rbrace \omega^n_{0,j} \nonumber\\   + \left( \frac{r_1^3 Re \alpha^n}{48 R_\circ \Delta \theta} + \frac{r_1^3}{24 R_\circ^2 (\Delta \theta)^2} \right) \omega^n_{0,j-1} + \left( \frac{r_1^3}{24 R_\circ^2 \theta_1 \Delta \theta} - \frac{r_1^3 Re \alpha^n}{48 R_\circ \Delta \theta} \right) \omega^n_{0,j+1} \nonumber\\ + \left( \frac{r_1^3}{24 R_\circ} - \frac{r_1^2}{6} \right)\left( \frac{(r_2 - R_\circ)^2 \omega^n_{1,j} - r_1^2 \omega^n_{2,j}}{r_1(r_2-R_\circ)(r_2)-r_1} \right) + \left(\frac{r_1}{2R_\circ} - 1 \right) \alpha^n - \frac{r_1^2 \alpha^n}{6 R_\circ^2} + \frac{r_1^3 \alpha^n}{12 R_\circ^3} \bigg]. \nonumber
+\end{eqnarray}
+
+%\end{equation}
+Where $\Delta t$ is the uniform temporal step length and $\Delta \theta$ is the uniform spatial step length along the $\theta$ direction.
+
+\subsection*{Calculation of lift and drag coefficients}
+ We formulate the following expressions for lift $(C_L)$ and drag $(C_D)$ forces respectively
+\begin{equation}
+C_L = -\frac{1}{Re} \int_0^{2 \pi} \left[ \left( \frac{\partial \omega}{\partial r} \right)_{R_\circ} - \omega_{R_\circ} \right] \cos \theta d\theta,
+\end{equation}
+\begin{equation}
+C_D = \frac{1}{Re} \int_0^{2 \pi} \left[ \left( \frac{\partial \omega}{\partial r} \right)_{R_\circ} - \omega_{R_\circ} \right] \sin \theta d\theta.
+\end{equation}
+The integral over $\theta$ is numerically computed using trapezoidal rule.
+
+\section{Results and Discussion}
+%\subsection{Flows for $Re = 200$ }
+Here, we mainly study two different aspects of flow behavior for $Re = 200;$ (i) flow at very early stage, i.e., soon after the impulsive start of the motion, (ii) flow after long time of the impulsive start of the motion i.e., after the wake becomes a fully developed flow. Behavior at these two stages of flow are totally different. Some researchers have studied the second aspect of flow behavior for $Re = 200$ for small range of $S_e$ and $\alpha_m$ values, but to the best of our knowledge, no one has provided a deep insight into the flow dynamics at the initial stages of the motion. The study of flow dynamics at the initial stages of the motion is important to understand the primary effect of rotational oscillation on the circular cylinder in comparison to the static cylinder and rotating cylinder. In the case of static cylinder and rotating cylinder, the vortex shedding phenomena at the initial stages is different from the vortex shedding phenomena at the stages, when the flow reaches the dynamical steady state \cite{ray2009, ray2010}. Therefore, in the case of rotationally oscillating cylinder, where flow phenomena is more complex, the vortex shedding phenomena at the initial stages may be different from the stages, when flow reaches the dynamical steady state. Therefore, this study is very relevant to understand the total behavior of the flow at $Re=200$.
+%We use our newly developed HOC scheme to study the flow. HOC scheme has already established itself as one of the efficient and robust scheme to study the complex fluid flow problem like flow past a circular cylinder and its rotating counterpart \cite{ray2009, ray2011, ray2010, ray2014}. Before going to study and analyze our main results, we first check the grid and temporal independence of our computed results and validate our scheme by comparing our results with existing experimental and standard numerical results.
+
+
+%We have used Proposed HOC scheme to visualize and analyze the temporal behavior of vortex formation and relevant streamline patterns, velocity components, lift and drag coefficients, their power spectra and other flow behaviors over broad ranges of three externally specified parameters, i.e., $S_e$ ranging from $0.2$ to $5.0$, $\alpha_m$ ranging from $0.5$ to $2.0$ for $Re = 200$. Before going to study and analyze our main results, we first check the grid and temporal independence of our computed results and validate our scheme by comparing our results with existing experimental results.
+\begin{table}[!b]
+\caption{Comparative study of lift and drag coefficients; (a) for different far field boundaries ($R_\infty$), (b) for different grid sizes.}
+\begin{minipage}{.55\linewidth}
+\centering
+\subfigure[]{
+ \begin{tabular}{ccc}  \hline
+ $R_\infty$ &  $|C_{L}|$  &  $|C_{D}|$    \\ \hline
+ 15  &  3.4342         &  2.6120            \\
+ 20  &  3.3888         &  2.7089              \\
+ 25  &  3.4847         &  2.7581              \\ \hline
+\end{tabular}
+  \label{table_lift-drag-field}}
+\end{minipage}
+\begin{minipage}{.55\linewidth}
+\centering
+ % \caption{}
+ \subfigure[]{
+ \begin{tabular}{ccc}  \hline
+ grid size &  $|C_{L}|$  &  $|C_{D}|$    \\ \hline
+ $(151, 151)$  &  3.4721         &  2.5569            \\
+ $(181, 181)$  &  3.4342         &  2.6120            \\
+ $(221, 221)$  &  3.4517         &  2.5812             \\
+ $(251, 251)$  &  3.4421         &  2.5926              \\ \hline
+ \end{tabular}
+\label{lift-drag-grid}}
+\end{minipage}
+\end{table}
+
+We first check the grid and temporal independence of our computed results and validate our scheme by comparing our results with existing experimental and standard numerical results. Both grid and temporal independence are critical for time dependent flows (Rumsey et al. \cite{rumsey1996}, Liggett and Smith \cite{liggett2012}). In Table \ref{table_lift-drag-field}, we present the computed peak values of drag and lift coefficients for three different far field boundaries ($R_\infty$), situated at a distance $15, 20$ and $25$ times the radius of the circular cylinder respectively, for $Re = 200$ and $S_f/S_\circ = 0.4$ and $\alpha_m = 2.0$, $\Delta t = 0.001$ with grid size $(181 \times 181)$. One can notice that the maximum deviation in $C_L$ is $2.82\%$, when comparing second row and third row, whereas maximum deviation in $C_D$ is $3.70\%$, when comparing first row and second row. On the other hand, Table \ref{lift-drag-grid} presents the computed peak values of drag and lift coefficients for different grid sizes ranging from $(151 \times 151)$ to $(251 \times 251)$ for the same $Re$, $S_f/S_\circ$, $\alpha_m$ and $\Delta t$ values and taking far field boundary at a distance $15$ times the radius of the cylinder. One can notice that the maximum deviation in $C_L$ is $1.10\%$, whereas maximum deviation in $C_D$ is $2.15\%$. From these tables, it is clear that a grid of size $(181 \times 181)$ and far field boundary at a distance $15$ times the radius of the cylinder are enough for accurate resolution of the flow. Table \ref{lift-drag-temp} shows the comparative study of drag and lift coefficients for different time steps ranging from $\Delta t = 0.001$ to $0.01$ for the same parameter values mentioned above and taking grid size as $(181 \times 181)$ and $R_\infty = 15R_\circ$. It can be found that the maximum deviation in $C_L$ is only $0.20\%$, whereas maximum deviation in $C_D$ is only $0.04\%$. From this table, it is clear that $\Delta t = 0.001$ is enough for accurate resolution of the flow. Therefore, all the investigations presented hereafter are based on grid size $(181 \times 181)$, time step $\Delta t = 0.001$ and far field $R_\infty = 15R_\circ$.
+
+%We now determine the grid and temporal dependence of our computed results, both of which are critical for time dependent flows. As an example, the results are calculated considering $S_f/S_\circ = 0.4$ and $\alpha_m = 2.0$ for the same problem. The corresponding figure has been shown in Fig.~\ref{lift-drag-time}
+%Computation with different fine meshes using $(r, \theta)$ = $(151, 151)$, $(181, 181)$, $(221, 221)$ and $(251, 251)$ is also carried out for the same problem to study the influence of grid refinement. The results shown in Table \ref{table_lift-drag-grid} indicate that drag coefficients agree with each other within $2.4\%$ and lift coefficients agree with each other within $1.1\%$. However, no significant changes have been observed in the phenomena of vortex shedding.
+
+%\begin{table}[htbp]
+%\centering
+% \begin{tabular}{ccc}  \hline \hline
+% $(r, \theta)$ &  $|C_{L}|$  &  $|C_{D}|$    \\ \hline
+% $(151, 151)$  &  3.4721         &  2.5569            \\
+% $(181, 181)$  &  3.4342         &  2.6120            \\
+% $(221, 221)$  &  3.4517         &  2.5812             \\
+% $(251, 251)$  &  3.4421         &  2.5926              \\ \hline
+% \end{tabular}
+%  \label{table_lift-drag-grid}
+%  \caption{\small Peak values of lift and drag coefficients for different grid systems with $\Delta t = 0.001$, $R_{\infty} = 15$.}
+%\end{table}
+%
+%Then, simulations are carried out at non dimensional time steps of $\Delta t = 0.001, 0.0025, 0.005, 0.0075$ and $0.01$ for $(r, \theta) = (181, 181)$, $R_\infty = 15$. It can be observed from the Table 2 that the peak value of lift and drag coefficients do not show much dependence on the time step. However, the plots of lift and drag coefficients for the three different grid systems are virtually the same which can be seen from Fig.~\ref{lift-drag-time}. It has been determined that the computed results are qualitatively independent of changes in the grid refinement, time steps. It was, therefore, decided to carry out the simulations in this work for $(r, \theta) = (181, 181); R_{\infty} = 15$ and $\Delta t = 0.001$.
+%\begin{figure}
+%\begin{minipage}{.5\linewidth}
+% \centering
+%\includegraphics[width=\textwidth]{lift-drag_temp-dependent.eps}
+%\label{lift-drag-time}
+%\end{minipage}
+%\begin{minipage}{.5\linewidth}
+%\centering
+%\begin{tabular}{ccc}  \hline \hline
+% $\Delta t$ &  $|C_{L}|$  &  $|C_{D}|$    \\ \hline
+% 0.0010  &  3.4342
+%          &  2.6120            \\
+% 0.0025  &  3.4392         &  2.6127             \\
+% 0.0050  &  3.4323         &  2.6136              \\
+% 0.0075  &  3.4321         &  2.6146              \\
+% 0.0100  &  3.4351         &  2.6158              \\ \hline
+%\end{tabular}
+% \label{lift-drag-temp}
+%\end{minipage}
+%\caption{\small Effect of time step on peak value of lift and drag coefficients; $(r, \theta) = (181 \times 181)$. \quad Table 2. Peak values of lift and drag coefficients (plotted in the left figure).}
+%\end{figure}
+
+\begin{table}[htbp]
+\caption{Comparative study of lift and drag coefficients for different time steps ($\Delta t$).}
+\begin{center}
+\begin{tabular}{ccc}  \hline
+ $\Delta t$ &  $|C_{L}|$  &  $|C_{D}|$    \\ \hline
+ 0.0010  &  3.4342         &  2.6120            \\
+ 0.0025  &  3.4392         &  2.6127             \\
+ 0.0050  &  3.4323         &  2.6136              \\
+ 0.0075  &  3.4321         &  2.6146              \\
+ 0.0100  &  3.4351         &  2.6158              \\ \hline
+\end{tabular}
+\end{center}
+\label{lift-drag-temp}
+\end{table}
+
+%\begin{table}[htbp]
+%\caption{Comparative study of lift and drag coefficients for different time steps ($\Delta t$).}
+%\begin{center}
+%\begin{tabular}{c|ccccc}  \hline \hline
+% $\Delta t$ &  0.0010  &  0.0025 &  0.0050 &  0.0075 & 0.0100     \\ \hline
+% $C_L$ &  3.4342  & 3.4392 &  3.4323 &  3.4321 &  3.4351   \\ \hline
+% $C_D$ &  2.6120 & 2.6127 & 2.6136  & 2.6146 & 2.6158  \\ \hline
+% \end{tabular}
+%\end{center}
+%\label{lift-drag-temp}
+%\end{table}
+%The outcome of our procedure is found to be satisfactory for the two dimensional computations using $ \left(r,\theta \right) = \left(181, 181 \right) $ with grid crowded near the cylinder surface along the radial direction. Such a grid has been generated with the help of following stretching function
+%\begin{center}
+%$r_i = \exp \left( \frac{\lambda \pi i}{i_{max}} \right)$
+%\end{center}
+% with $\lambda$ determining the outer radius of the computational domain.
+%The far field boundary is $15$ times the radius in the radial direction and time step is fixed at $0.001$. The rotational oscillation of the cylinder enters the boundary conditions in terms of non dimensional speed $ \alpha $ of which the dimensionless form is
+%\begin{center}
+%$ \alpha = \alpha_m \sin 2 \pi S_et$. \end{center}
+%Here $S_e$ denotes dimensionless forced oscillating frequency ratio $S_f/S_\circ$ and $\alpha_m$ is the dimensionless peak rotation rate. $S_f$ is the forced oscillating frequency of the cylinder and $S_\circ$ is the frequency of the vortex shedding for flow past a stationary cylinder, its value taken as approximately equal to $0.1$.
+%For a fixed Reynolds number $Re$, $\alpha_m$ and $S_f$ are employed as the main parameters. In order to get general conclusions regarding periodicity and frequency regimes for flow past a rotationally oscillating cylinder, calculations are performed at an arbitrary selected point $x = 1.04616$ and $y = -0.069813$ for plotting the phase diagram(velocity end point diagram). Typical values of $\alpha_m$ = $0.5$, $1.0$ and $2.0$ are taken as numerical results are available in the literature for these values.
+
+%To validate our scheme we first compare our computed results with the experimental results of Thiria \emph{et al.} (2006) and numerical results of Protas \& wesfreid (2002) and Du \& Dalton (2013). Here, we have considered the same parameter values as considered by Thiria \emph{et al.} (2006) to compute our results.
+Fig \ref{mean_drag_a2-0} shows the comparison between present result and the corresponding results of Thiria et al. \cite{thiria2006} and Protas \& wesfreid \cite{protas2002} for the variation of mean values of drag coefficient for different $S_e$ values taking $\alpha_m = 2.0$. Whereas, Fig \ref{mean_drag_a0-5} presents the same comparison between present result and the numerical result of Du \& Dalton (2013) taking $\alpha_m = 0.5$. Both the figures show that present results are matching very well with the experimental as well as existing numerical results. In Fig.~\ref{comp_experimental}, we show the qualitative comparison of vorticity contours between present result and corresponding experimental result of Kumar et al. \cite{smittal2013} for $Re = 185$, $\alpha_m = \pi/2$, with two different $S_e$ values,
+\begin{figure}[htbp]
+\centering
+  \hspace{-0.8cm}
+  \begin{minipage}[t]{0.5\linewidth}
+  \subfigure[]{
+   \includegraphics[width=\linewidth]{mean_drag_a2-0.eps}
+    \label{mean_drag_a2-0}}
+   \end{minipage}	
+  \hspace{-0.8cm}
+  \begin{minipage}[t]{0.5\linewidth}
+   \subfigure[]{
+    \includegraphics[width=\linewidth]{mean_drag_a0-5.eps}
+     \label{mean_drag_a0-5}}
+   \end{minipage}
+  \caption{Comparative study of variation of mean value of $C_D$ as a function of $S_e$ at $Re = 150$; (a) taking $\alpha_m = 2.0$, (b) taking $\alpha_m = 0.5$. }
+  \label{mean_drag}
+%  \caption{Comparative study of variation of mean value of $C_D$ as a function of $S_e$ at $Re = 150$; (a) present resu Experimental results from Thiria \emph{et al.} (2006); Numerical results from Protas \& wesfreid (2002) (b) Numerical results from Du \& Dalton (2013). }
+\end{figure}
+i.e., $1.0$ and $1.2$. These figures clearly show the extreme closeness of our numerical results with the experimental ones, in terms of vortex formation and flow behavior. One can observe only two rows of vortices with no clear signs of merging at the forcing frequency $1.0$. However, increasing the forcing frequency to $1.2$ shows two vortices ready to merge which is shown by an arrow in our numerical result similar to the one pointed in the experimental result. Therefore, all the above comparisons clearly demonstrate that present scheme is efficient in accurate prediction of different flow phenomena.
+\begin{figure}[htbp]
+\centering
+{\includegraphics[width=\textwidth]{streaklines_f_1-0_pi-by-2_compared-JFM_t0-4.eps}}
+{\includegraphics[width=\textwidth]{streaklines-f_1-2_pi-by-2_-compared-JFM.eps}}
+\caption{\small Comparison of streaklines for $Re = 185$ and $\alpha_m = \pi/2$; (left) present result with $S_e = 1.0$ and $S_e = 1.2$ ; (right) Experimental (Kumar et al. \cite{smittal2013}) result with $S_e = 1.0$ and  $S_e = 1.2$ respectively and the white arrow shows an instance of vortex merger.}
+\label{comp_experimental}
+\end{figure}
+
+We also perform flow computations for $Re = 500$ and compare our computed results with those of Dennis et al. \cite{dennis2000}. Here, we consider the same parameter values (i.e., $S_f/S_\circ = 1/12$ and $\alpha_m = 1.0$) as considered by Dennis et al. . Streamline patterns are shown at times $t = 24$ and $t = 26$ in Fig.~\ref{re500_1by12_dennis_comp}. They show a good qualitative agreement.
+
+\begin{figure}[htbp]
+\centering
+{\includegraphics[width=0.85\textwidth]{re500_pi-by-6_comp-paper.eps}}
+\caption{\small Streamlines at Re = 500 for $ S_f=1/12$ and $\alpha_m = 1.0 $,\, obtained by the present work at (A) $t=24$ and (B) $t=26$, and corresponding results of Dennis et al. \cite{dennis2000} at (a) $t=24$ and (b) $t=26$.}
+\label{re500_1by12_dennis_comp}
+\end{figure}
+
+%Now, we are ready to study and analyze our main results. For a fixed Reynolds number $Re =200$, different combinations of $\alpha_m$ and $S_f$ are considered to study and analyze the flow phenomena.
+%To plot the phase diagram (velocity end point diagram), calculations are performed at an arbitrarily selected point $(1.04616, -0.069813)$. Typical values of $\alpha_m$ = $0.5$, $1.0$ and $2.0$ are taken as results are available in the literature for these values.
+\subsection{Flow dynamics for $Re = 200$ }
+\subsubsection*{Flow dynamics soon after the impulsive start of the motion}
+The rotational oscillation of the cylinder $\alpha(t)$ is a function of time and it can be written in dimensionless form as $ \alpha(t) = \alpha_m \sin 2 \pi S_et .$ If we consider $S_e = 1.0$, then $ \alpha(t) = \alpha_m $ \quad for \quad $t = 0.25, 1.25, 2.25, 3.25,....$ It means that, at these time values, rotational oscillation of the cylinder is equal to the peak rotation rate for $S_e = 1.0$. Therefore, to study the initial flow behavior we have considered the non-dimensional time levels, between $t=0.25$ to $t=11.25$, for which $ \alpha(t) = \alpha_m $. Numerical simulations are carried out for $\alpha_m = 0.5, 1.0, 2.0, 4.0$ and 6.0 with $S_e = 1.0$. 
+%To the best of our knowledge, no one has provided a deep insight into the flow behavior during the initial stages after the impulsive start of motion for this problem.
+
+\begin{figure}[t]
+\centering
+\begin{tabular}{c c}
+\includegraphics[scale=0.28]{a0-5_f1-0_t0-25.eps} & \includegraphics[scale=0.28]{a0-5_f1-0_t1-25.eps} \\
+\includegraphics[scale=0.28]{a0-5_f1-0_t2-25.eps}  &  \includegraphics[scale=0.28]{a0-5_f1-0_t3-25.eps} \\
+\includegraphics[scale=0.28]{a0-5_f1-0_t4-25.eps} &  \includegraphics[scale=0.28]{a0-5_f1-0_t5-25.eps} \\
+\includegraphics[scale=0.28]{a0-5_f1-0_t6-25.eps} & \includegraphics[scale=0.28]{a0-5_f1-0_t7-25.eps} \\
+\includegraphics[scale=0.28]{a0-5_f1-0_t8-25.eps} & \includegraphics[scale=0.28]{a0-5_f1-0_t9-25.eps} \\
+\includegraphics[scale=0.28]{a0-5_f1-0_t10-25.eps} & \includegraphics[scale=0.28]{a0-5_f1-0_t11-25.eps}
+\end{tabular}
+\caption{Instantaneous streamlines for $Re = 200$, $S_e = 1.0$ at various times such that $\alpha = \alpha_m = 0.5$. }
+\label{a_0-5_f1-0_near-wake}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\begin{tabular}{c c}
+\includegraphics[scale=0.3]{a1-0_f1-0_t0-25.eps} & \includegraphics[scale=0.3]{a1-0_f1-0_t1-25.eps} \\
+\includegraphics[scale=0.3]{a1-0_f1-0_t2-25.eps}  &  \includegraphics[scale=0.3]{a1-0_f1-0_t3-25.eps} \\
+\includegraphics[scale=0.3]{a1-0_f1-0_t4-25.eps} &  \includegraphics[scale=0.3]{a1-0_f1-0_t5-25.eps} \\
+\includegraphics[scale=0.3]{a1-0_f1-0_t6-25.eps} & \includegraphics[scale=0.3]{a1-0_f1-0_t7-25.eps} \\
+\includegraphics[scale=0.3]{a1-0_f1-0_t8-25.eps} & \includegraphics[scale=0.3]{a1-0_f1-0_t9-25.eps} \\
+\includegraphics[scale=0.3]{a1-0_f1-0_t10-25.eps} & \includegraphics[scale=0.3]{a1-0_f1-0_t11-25.eps}
+\end{tabular}
+\caption{Instantaneous streamlines for $Re = 200$, $S_e = 1.0$ at various times such that $\alpha = \alpha_m = 1.0$. }
+\label{a_1-0_f1-0_near-wake}
+\end{figure}
+
+We start with the case when $S_e = 1.0$ and $\alpha_m = 0.5$ (Fig. \ref{a_0-5_f1-0_near-wake}). Soon after the impulsive start of the motion, at time $t = 1.25$, a pair of primary vortices (unequal in size) start to grow behind the surface of the cylinder, both above and below the axis of the flow (the positive x-axis). During next few instants of time ($t$ = 2.25 - 4.25) these pair of vortices grow in size. At around $t=5.25$, a pair of small secondary vortices is seen to develop in front of the upper primary vortex. Within an instant of time, these secondary vortices merge into a single vortex and then disappear at around $t = 7.25$. At this time, the upper primary vortex starts to open up and gradually sheds into the downstream, whereas the lower primary vortex grows in size during this time. At around $t=9.25$, the lower primary vortex starts to open up and gradually sheds into the downstream. During this process, a pair of small tertiary vortex is seen to develop (at around $t=10.25$) near the bottom of the lower primary vortex, touching the cylinder surface. Like the secondary vortices, within an instant of time these tertiary vortices merged into a single vortex and then disappear. At around $t=11.25$, when the lower primary vortex is almost shed into the downstream, a new vortex starts to generate almost at the same place where upper primary vortex was developed.
+
+We then present the numerical simulations for $S_e = 1.0$ and $\alpha_m = 1.0$ (in Fig. \ref{a_1-0_f1-0_near-wake}). In this case, no substantial changes are seen in the vortex shedding phenomena except the size of the lower primary vortex, which is relatively smaller than the previous case. Comparing the streamlines at time $t = 5.25$ with $\alpha_m = 0.5$, in this case, one can see that the primary vortex formed at the lower half of the cylinder has almost vanished. However, later on ($t = 6.25 - 8.25$), it gains volume and gradually opens up and sheds into the downstream.
+
+\begin{figure}[t]
+\centering
+\begin{tabular}{c c}
+ \includegraphics[scale=0.3]{a2-0_f1-0_t0-25.eps} & \includegraphics[scale=0.3]{a2-0_f1-0_t1-25.eps} \\
+\includegraphics[scale=0.3]{a2-0_f1-0_t2-25.eps}  &  \includegraphics[scale=0.3]{a2-0_f1-0_t3-25.eps} \\
+\includegraphics[scale=0.3]{a2-0_f1-0_t4-25.eps} &  \includegraphics[scale=0.3]{a2-0_f1-0_t5-25.eps} \\
+\includegraphics[scale=0.3]{a2-0_f1-0_t6-25.eps} & \includegraphics[scale=0.3]{a2-0_f1-0_t7-25.eps} \\
+ \includegraphics[scale=0.3]{a2-0_f1-0_t8-25.eps} & \includegraphics[scale=0.3]{a2-0_f1-0_t9-25.eps} \\
+\includegraphics[scale=0.3]{a2-0_f1-0_t10-25.eps} & \includegraphics[scale=0.3]{a2-0_f1-0_t11-25.eps}
+\end{tabular}
+\caption{Instantaneous streamlines for $Re = 200$, $S_e = 1.0$ at various times such that $\alpha = \alpha_m = 2.0$. }
+\label{a_2-0_f1-0_near-wake}
+\end{figure}
+Further increase in the rotational speed, $\alpha_m$ to 2.0 produces a noticeable change in the vortex formation below the x-axis (Fig. \ref{a_2-0_f1-0_near-wake}). While the lower primary vortex (below the positive x-axis) is observed at $t = 1.25$ for the previous two cases, here it makes its appearance at around $t = 6.25$. But, the vortex shedding phenomena in the upper half of the cylinder in this case is almost similar to the previous two cases. In this case, first the vortices (both upper primary vortex and the pair of secondary vortices) form the upper half of the cylinder develop and shed into the down stream and then the vortices (both lower primary vortex and the pair of tertiary vortices) from the lower half of the cylinder develop and shed into the down stream. Therefore, unlike the previous two cases, here the vortices develop and shed into the down stream alternately from the upper half and the lower half of the cylinder.
+
+\begin{figure}[t]
+\centering
+\begin{tabular}{c c}
+ \includegraphics[scale=0.23]{a4-0_f1-0_t0-25.eps} & \includegraphics[scale=0.23]{a4-0_f1-0_t1-25.eps} \\
+\includegraphics[scale=0.23]{a4-0_f1-0_t2-25.eps}  &  \includegraphics[scale=0.23]{a4-0_f1-0_t3-25.eps} \\
+\includegraphics[scale=0.23]{a4-0_f1-0_t4-25.eps} &  \includegraphics[scale=0.23]{a4-0_f1-0_t5-25.eps} \\
+\includegraphics[scale=0.23]{a4-0_f1-0_t6-25.eps} & \includegraphics[scale=0.23]{a4-0_f1-0_t7-25.eps} \\
+\includegraphics[scale=0.23]{a4-0_f1-0_t8-25.eps} & \includegraphics[scale=0.23]{a4-0_f1-0_t9-25.eps} \\
+\includegraphics[scale=0.23]{a4-0_f1-0_t10-25.eps} & \includegraphics[scale=0.23]{a4-0_f1-0_t11-25.eps}
+\end{tabular}
+\caption{Instantaneous streamlines for $Re = 200$, $S_e = 1.0$ at various times such that $\alpha = \alpha_m = 4.0$. }
+\label{a_4-0_f1-0_near-wake}
+\end{figure}
+
+%\addtocounter{figure}{-1}
+%\begin{figure}[t]
+%\centering
+%\begin{tabular}{c c}
+%\includegraphics[scale=0.25]{a4-0_f1-0_t10-25.eps} & \includegraphics[scale=0.25]{a4-0_f1-0_t11-25.eps}
+%\end{tabular}
+%\caption{Contd.. Instantaneous streamlines for $Re = 200$, $S_e = 1.0$ at various times such that $\alpha = \alpha_m = 4.0$. }
+%\label{a_4-0_f1-0_near-wake}
+%\end{figure}
+
+\begin{figure}[b]
+\centering
+\begin{tabular}{c c}
+ \includegraphics[scale=0.23]{a6-0_f1-0_t0-25.eps} & \includegraphics[scale=0.23]{a6-0_f1-0_t1-25.eps} \\
+\includegraphics[scale=0.23]{a6-0_f1-0_t2-25.eps}  &  \includegraphics[scale=0.23]{a6-0_f1-0_t3-25.eps} \\
+\includegraphics[scale=0.23]{a6-0_f1-0_t4-25.eps} &  \includegraphics[scale=0.23]{a6-0_f1-0_t5-25.eps} \\
+\includegraphics[scale=0.23]{a6-0_f1-0_t6-25.eps} & \includegraphics[scale=0.23]{a6-0_f1-0_t7-25.eps} \\
+\includegraphics[scale=0.23]{a6-0_f1-0_t8-25.eps} & \includegraphics[scale=0.23]{a6-0_f1-0_t9-25.eps} \\
+\includegraphics[scale=0.23]{a6-0_f1-0_t10-25.eps} & \includegraphics[scale=0.23]{a6-0_f1-0_t11-25.eps}
+\end{tabular}
+\caption{Instantaneous streamlines for $Re = 200$, $S_e = 1.0$ at various times such that $\alpha = \alpha_m = 6.0$. }
+\label{a_6-0_f1-0_near-wake}
+\end{figure}
+
+With further increase in value of $\alpha_m$ to 4.0, substantial changes are observed in the flow patterns; the flow structure becomes more complex and vortex shedding phenomena develop alternately from upper and lower half of the cylinder (Fig. \ref{a_4-0_f1-0_near-wake}). Only one primary vortex is seen to develop and grow in size above the positive $x$-axis till time $t = 4.25$. At around $t = 5.25$, a secondary vortex is seen developing on the top of the cylinder, displacing the primary vortex. During next few instants, the secondary vortex gains its volume and sheds into the downstream pushing the primary vortex more towards the downstream. During this process, the primary vortex starts to open up and gradually sheds into the downstream. At around $t=6.25$, a tertiary vortex is seen to develop in the lower half of the cylinder. During next few instances, this tertiary vortex moves towards the bottom of the cylinder and gains its size.  At around $t=10.25$ the tertiary vortex starts to open up and moves towards the downstream. At around $t=11.25$, a new vortex starts to grow in the upper half of the cylinder, at the position of the primary vortex.
+
+
+%\addtocounter{figure}{-1}
+%\begin{figure}[t]
+%\centering
+%\begin{tabular}{c c}
+%%\includegraphics[scale=0.25]{a6-0_f1-0_t6-25.eps} & \includegraphics[scale=0.25]{a6-0_f1-0_t7-25.eps} \\
+%%\includegraphics[scale=0.25]{a6-0_f1-0_t8-25.eps} & \includegraphics[scale=0.25]{a6-0_f1-0_t9-25.eps} \\
+%\includegraphics[scale=0.25]{a6-0_f1-0_t10-25.eps} & \includegraphics[scale=0.25]{a6-0_f1-0_t11-25.eps}
+%\end{tabular}
+%\caption{Contd.. Instantaneous streamlines for $Re = 200$, $S_e = 1.0$ at various times such that $\alpha = \alpha_m = 6.0$. }
+%\label{a_6-0_f1-0_near-wake}
+%\end{figure}
+
+%\begin{figure}[t]
+%\centering
+%\begin{tabular}{c c c}
+%\subfigure[]  {\includegraphics[scale=0.2]{u_vs_x_a0-5_f1-0_sin-1}} &
+%\subfigure[]  {\includegraphics[scale=0.2]{v_vs_y_a0-5_f1-0_sin-1}} &
+%\subfigure[] {\includegraphics[scale=0.2]{vorticity_theta_a0-5_f1-0_sin-1.eps}}
+%\end{tabular}
+%\caption{Evolution of (a) $u$-velocity along $\theta=0^\circ$ line (b) $v$-velocity profile along $\theta = 90^\circ$ line and (c) solid surface vorticity for $Re = 200$, $S_e = 1.0$.}
+%\label{u-y_w_near-wake}
+%\end{figure}
+
+When we increase the $\alpha_m$ value to 6.0, the vorticity distribution behind the cylinder and corresponding vortex shedding phenomena from the lower half of the cylinder exactly replicate the phenomena developed in the upper half of the cylinder, which is shown in Fig. \ref{a_6-0_f1-0_near-wake}. Due to the high rotation rate, vorticity is dragged with the cylinder oscillation and the positive and negative vorticity seem wrapped around cylinder. In this case, the vorticity distribution is almost the same as in the case of $\alpha_m = 4.0$ till $t = 6.25$, except a little delay in the formation of the secondary vortex and is bigger in size. On the other hand, at around $t=6.25$ the tertiary vortex starts to grow in the lower half of the cylinder and then it exactly follows the same pattern as in the case of upper half of the cylinder. Thereafter, it starts repeating the phenomena in the upper half of the cylinder, which confirm a periodic nature of the flow.
+\clearpage
+In Fig. \ref{u-y_w_near-wake}, we plot the $u$-velocity profile along $\theta=0^\circ$ line, $v$-velocity profile along $\theta=90^\circ$ line and solid surface vorticity at the different instants of time with $S_e = 1.0$ and $Re = 200$. The presence of the closed wake is revealed by the existence of negative velocities on part of the axis as can be seen from Fig. \ref{u-y_w_near-wake}(a). In this wake, near the axis, the flow direction is opposite to the general one. The closed-wake length appears clearly and it can be measured by the axial distance between the zero-velocity point and the rear stagnation point corresponding to the origin of the curves. It appears that for $\alpha_m = 0.5$ when $t$ is increasing, the maximum of velocity in the wake $- u_{max}$ increases up to $t=5.25$, when it shows the maximum value as $0.9$, and then decreases. When $\alpha_m$ increases, the maximum velocity in the wake $- u_{max}$ decrease continuously and for $\alpha_m = 6.0$ the maximum value appears to be $0.2$ for $t= 6.25$. One can see another important change in the $u$-velocity profiles for higher $t$ values with increasing $\alpha_m$, as compared to the case of flow past a rotating and translating circular cylinder (\cite{ray2011}). In this case, for higher time levels, $u$-velocity profiles along $\theta=0^\circ$ line shows some deformation up to a distance far from the surface of the cylinder, which means the near wake effect is extended further along the downstream due to the combined effect of rotation and oscillation. This deformation increases with increasing $\alpha_m$ up to $\alpha_m = 4.0$ and then decreases. The $v$-velocity profile along $\theta=90^\circ$ line presented in Fig. \ref{u-y_w_near-wake}(b) shows the near wake effect of the flow along positive $y$-direction from the top of the cylinder. One can see that the range of this near wake effect increases with increasing $\alpha_m$. For $\alpha_m = 6.0$ this effect can be seen up to three times the radius of the cylinder along the $y$-direction and the maximum of velocity in the wake $- v_{max}$ increases up to $5.2$. These results confirm the flow phenomena described through the streamfunction patterns. The distribution of the vorticity at the cylinder surface, given in Fig. \ref{u-y_w_near-wake}(c) permits to determine the moment of the appearance of a secondary vortex. But, in this case solid surface vorticity patterns are completely different as compared to the case of translating cylinder (\cite{kalita2009}) and its rotating counterpart (\cite{ray2011}). Figures show that with increasing $\alpha_m$, the vorticity on the surface of the cylinder  $-\omega_\circ $ increases strongly. On the other hand, for each fixed $\alpha_m$, the vorticity on the surface of the cylinder  $-\omega_\circ $ increases with increasing time level up to $t = 7.25$ and then decreases.
+
+%The $u$-velocity profile along $\theta=0$ line and corresponding solid surface vorticity at the different instants of time for the above mentioned $\alpha_m$ values, along with $\alpha_m = 1.0$ and $Re=200$ is presented in the Fig. \ref{u-y_w_near-wake}. This figure certainly confirms the flow phenomena, described above, along with the increasing complexity of the flow patterns with the increase in the $\alpha_m$ values.
+
+
+%\clearpage
+%\addtocounter{figure}{-1}
+%\begin{figure}[t]
+%\centering
+%\begin{tabular}{c c c}
+%\subfigure  {\includegraphics[scale=0.2]{u_vs_x_a1-0_f1-0_sin-1}} &
+%\subfigure  {\includegraphics[scale=0.2]{v_vs_y_a1-0_f1-0_sin-1}} &
+% \subfigure {\includegraphics[scale=0.2]{vorticity_theta_a1-0_f1-0_sin-1.eps}} \\
+%\subfigure  {\includegraphics[scale=0.2]{u_vs_x_a2-0_f1-0_sin-1}} &
+%\subfigure  {\includegraphics[scale=0.2]{v_vs_y_a2-0_f1-0_sin-1}} &
+% \subfigure {\includegraphics[scale=0.2]{vorticity_theta_a2-0_f1-0_sin-1.eps}} \\
+%\subfigure  {\includegraphics[scale=0.2]{u_vs_x_a4-0_f1-0_sin-1}} &
+%\subfigure  {\includegraphics[scale=0.2]{v_vs_y_a4-0_f1-0_sin-1}} &
+% \subfigure {\includegraphics[scale=0.2]{vorticity_theta_a4-0_f1-0_sin-1.eps}}\\
+% \subfigure {\includegraphics[scale=0.2]{u_vs_x_a6-0_f1-0_sin-1}} &
+%  \subfigure {\includegraphics[scale=0.2]{v_vs_y_a6-0_f1-0_sin-1}} &
+% \subfigure {\includegraphics[scale=0.2]{vorticity_theta_a6-0_f1-0_sin-1.eps}}
+%\end{tabular}
+%\caption{Contd.. Evolution of (a) $u$-velocity along $\theta=0^\circ$ line (b) $v$-velocity profile along $\theta = 90^\circ$ line and (c) solid surface vorticity for $Re = 200$, $S_e = 1.0$.}
+%\label{u-y_w_near-wake}
+%\end{figure}
+
+\begin{figure}[b]
+\centering
+\begin{tabular}{c c}
+\subfigure{\includegraphics[scale=0.35]{u_vs_x_a0-5_f1-0_sin-1}} &
+\subfigure{\includegraphics[scale=0.35]{u_vs_x_a1-0_f1-0_sin-1}} \\
+\subfigure{\includegraphics[scale=0.35]{u_vs_x_a2-0_f1-0_sin-1}} &
+\subfigure{\includegraphics[scale=0.35]{u_vs_x_a4-0_f1-0_sin-1}} \\
+\subfigure{\includegraphics[scale=0.35]{u_vs_x_a6-0_f1-0_sin-1}} &
+\end{tabular}
+\caption{(a): Evolution of $u$-velocity along $\theta=0^\circ$ line for $Re = 200$, $S_e = 1.0$.}
+\label{u-y_w_near-wake}
+\end{figure}
+%\addtocounter{figure}{-1}
+%\begin{figure}[t]
+%\centering
+%\begin{tabular}{c c}
+%%\subfigure{\includegraphics[scale=0.35]{u_vs_x_a0-5_f1-0_sin-1}} &
+%%\subfigure{\includegraphics[scale=0.35]{u_vs_x_a1-0_f1-0_sin-1}} \\
+%%\subfigure{\includegraphics[scale=0.35]{u_vs_x_a2-0_f1-0_sin-1}} &
+%%\subfigure{\includegraphics[scale=0.35]{u_vs_x_a4-0_f1-0_sin-1}} \\
+%\subfigure{\includegraphics[scale=0.35]{u_vs_x_a6-0_f1-0_sin-1}} &
+%\end{tabular}
+%\caption{(a): Contd.. Evolution of $u$-velocity along $\theta=0^\circ$ line for $Re = 200$, $S_e = 1.0$.}
+%\label{u-y_w_near-wake}
+%\end{figure}
+
+\addtocounter{figure}{-1}
+\begin{figure}[b]
+\centering
+\begin{tabular}{c c}
+\subfigure{\includegraphics[scale=0.33]{v_vs_y_a0-5_f1-0_sin-1}} &
+\subfigure{\includegraphics[scale=0.33]{v_vs_y_a1-0_f1-0_sin-1}} \\
+\subfigure{\includegraphics[scale=0.35]{v_vs_y_a2-0_f1-0_sin-1}} &
+\subfigure{\includegraphics[scale=0.35]{v_vs_y_a4-0_f1-0_sin-1}} \\
+\subfigure{\includegraphics[scale=0.35]{v_vs_y_a6-0_f1-0_sin-1}} &
+\end{tabular}
+\caption{(b): Evolution of $v$-velocity along $\theta = 90^\circ$ line for $Re = 200$, $S_e = 1.0$.}
+%\label{u-y_w_near-wake}
+\end{figure}
+
+%\addtocounter{figure}{-1}
+%\begin{figure}[t]
+%\centering
+%\begin{tabular}{c c}
+%%\subfigure{\includegraphics[scale=0.35]{v_vs_y_a0-5_f1-0_sin-1}} &
+%%\subfigure{\includegraphics[scale=0.35]{v_vs_y_a1-0_f1-0_sin-1}} \\
+%\subfigure{\includegraphics[scale=0.35]{v_vs_y_a2-0_f1-0_sin-1}} &
+%\subfigure{\includegraphics[scale=0.35]{v_vs_y_a4-0_f1-0_sin-1}} \\
+%\subfigure{\includegraphics[scale=0.35]{v_vs_y_a6-0_f1-0_sin-1}} &
+%\end{tabular}
+%\caption{(b): Contd.. Evolution of $v$-velocity along $\theta = 90^\circ$ line for $Re = 200$, $S_e = 1.0$.}
+%%\label{u-y_w_near-wake}
+%\end{figure}
+
+
+\addtocounter{figure}{-1}
+\begin{figure}[b]
+\centering
+\begin{tabular}{c c}
+\subfigure{\includegraphics[scale=0.33]{vorticity_theta_a0-5_f1-0_sin-1}} &
+\subfigure{\includegraphics[scale=0.33]{vorticity_theta_a1-0_f1-0_sin-1}} \\
+\subfigure{\includegraphics[scale=0.35]{vorticity_theta_a2-0_f1-0_sin-1}} &
+\subfigure{\includegraphics[scale=0.35]{vorticity_theta_a4-0_f1-0_sin-1}} \\
+\subfigure{\includegraphics[scale=0.35]{vorticity_theta_a6-0_f1-0_sin-1}} &
+\end{tabular}
+\caption{(c): Solid surface vorticity for $Re = 200$, $S_e = 1.0$.}
+%\label{u-y_w_near-wake}
+\end{figure}
+
+%\addtocounter{figure}{-1}
+%\begin{figure}[t]
+%\centering
+%\begin{tabular}{c c}
+%%\subfigure{\includegraphics[scale=0.35]{vorticity_theta_a0-5_f1-0_sin-1}} &
+%%\subfigure{\includegraphics[scale=0.35]{vorticity_theta_a1-0_f1-0_sin-1}} \\
+%\subfigure{\includegraphics[scale=0.35]{vorticity_theta_a2-0_f1-0_sin-1}} &
+%\subfigure{\includegraphics[scale=0.35]{vorticity_theta_a4-0_f1-0_sin-1}} \\
+%%\subfigure{\includegraphics[scale=0.35]{vorticity_theta_a6-0_f1-0_sin-1}} &
+%\end{tabular}
+%\caption{(c): Contd.. Solid surface vorticity for $Re = 200$, $S_e = 1.0$.}
+%%\label{u-y_w_near-wake}
+%\end{figure}
+
+%\addtocounter{figure}{-1}
+%\begin{figure}[t]
+%\centering
+%\includegraphics[scale=0.4]{vorticity_theta_a2-0_f1-0_sin-1}
+%\includegraphics[scale=0.4]{vorticity_theta_a4-0_f1-0_sin-1}
+%\includegraphics[scale=0.4]{vorticity_theta_a6-0_f1-0_sin-1}
+%\caption{(c): Contd.. Solid surface vorticity for $Re = 200$, $S_e = 1.0$.}
+%%\label{u-y_w_near-wake}
+%\end{figure}
+
+\clearpage
+\subsubsection*{Flow dynamics of fully developed flows}
+%\subsection{Flow dynamics for $0.2 \leq S_e \leq 1.0$ and $0.5 \leq \alpha_m \leq 6.0$}
+
+After studying the flow phenomena at initial times, here we study and analyze the flow phenomena after wake becomes a fully developed flow and reaches its dynamical stable state. We consider different $S_e$ values, ranging from $0.2$ to $1.0$ and $\alpha_m$ values, ranging from $0.5$ to $6.0$, for $Re=200$. We study the flow behavior for $S_e = 0.2, 0.4, 0.6, 0.8, 1.0$ for each $\alpha_m = 0.5, 1.0, 2.0, 4.0, 6.0$, so that the effect of increasing $S_e$ values on the flow phenomena can be seen easily. On the other hand, effect of different $\alpha_m$ values on the flow phenomena can be seen from different flow figures with increasing $\alpha_m$ values. To study the flow behavior, we mainly rely on the profile of lift and drag coefficients, corresponding power-spectra and streaklines. For the fully developed flows, streakline plots obtained from the computed results are more expressive than the streamline plots in providing insight into the dynamics of the recirculating region responsible for the vortex formation in the near wake as well as in the far-wake. That is why streakline plots are considered here to analyze the flow phenomena.
+
+Fig. \ref{lift-drag_power_streaklines_a0-5} shows the profiles of lift-drag coefficients, corresponding power-spectra of lift coefficients and streaklines for dynamically stable state of flow for $\alpha_m = 0.5$ and $Re=200$ with different values of $S_e$, ranging from 0.2 to 1.0. The time histories of lift-drag coefficients show that for $S_e = 0.2, 0.4$ and $0.6$, there are more than one prominent frequencies in the lift spectrum. This is further confirmed by the existence of more than one frequency peaks in the corresponding power spectra, where the dominant peak corresponds to $S_f$ and the weaker one corresponds to the vortex shedding frequency $S_v$. The vortex shedding patterns exhibited by the streakline contours for $S_e = 0.2, 0.4$ are similar to the case when $S_e = 0$ (this stationary cylinder case is not shown here). The uneven amplitude of lift coefficient curves describes the shedding of vortices with unequal strength, which can be further confirmed by the corresponding streakline patterns. With the increase in $S_e$ value, the distance between $S_f$ and $S_v$ decreases and the corresponding time history of lift coefficient approaches towards a sinusoidal curve. This means vortices are approaching towards a shedding frequency equal to $S_v = S_f$ and the size and strength of these vortices approaches towards an equality. At around $S_e = 0.8$, a regular sinusoidal pattern has been observed for the first time for this case. $S_e = 1.0$ also shows a regular sinusoidal pattern but here the peak value of the lift coefficient is bigger than that of $S_e = 0.8$. This special phenomenon is described as``lock-on" by Cheng et al. \cite{cheng2001}. Only a single basic frequency peak is seen for these two $S_e$ values, as expected. This is further confirmed by the streakline patterns which show vortices with similar shapes and sizes, but opposite in direction, are shedding alternately from both sides of the cylinder.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.9\linewidth]{lift-drag-power-streaklines_f0-2_0-4_a0-5.eps}
+\includegraphics[width=0.9\linewidth]{lift-drag-power-streaklines_f0-6_0-8_a0-5.eps}
+\includegraphics[width=0.87\linewidth]{lift-drag-power-streaklines_f1-0_a0-5.eps}
+\caption{Plots of lift-drag coefficients (left); power spectra of lift coefficients (middle) and streaklines (right) for $Re = 200$, $\alpha_m = 0.5$ with various $S_e$ values.}
+\label{lift-drag_power_streaklines_a0-5}
+\end{figure}
+
+
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.9\linewidth]{lift-drag-power-streaklines_f0-2_0-4_a1-0.eps}
+\includegraphics[width=0.9\linewidth]{lift-drag-power-streaklines_f0-6_0-8_a1-0.eps}
+\includegraphics[width=0.87\linewidth]{lift-drag-power-streaklines_f1-0_a1-0.eps}
+\caption{Plots of lift-drag coefficients (left); power spectra of lift coefficients (middle) and streaklines (right) for $Re = 200$, $\alpha_m = 1.0$ with various $S_e$ values.}
+\label{lift-drag_power_streaklines_a1-0}
+\end{figure}
+
+The value of $\alpha_m$ is then increased to $1.0$. Fig. \ref{lift-drag_power_streaklines_a1-0} shows the profiles of lift-drag coefficients, corresponding power-spectra of lift coefficients and streaklines for fully developed flow for $\alpha_m = 1.0$ and $Re=200$ with different $S_e$ values, ranging from 0.2 to 1.0. The profiles of lift-drag coefficients for $S_e = 0.2, 0.4$ shows more than one prominent frequency peaks in the lift and drag spectra. This is further confirmed by the existence of more than one frequency peaks in the corresponding power spectra of the lift coefficient. Streakline patterns show almost same vortex shedding patterns like previous case, except the size of vortices, which are smaller in the present case. Unlike for the case of $\alpha_m = 0.5$, in this case for $S_e = 0.6$, a regular sinusoidal spectrum with one single peak is seen in the lift and drag profiles. This means the vortex shedding frequency reaches ``lock-on" in this $S_e$ value. Same patterns can be seen for $S_e = 0.8$ and $1.0$, but the peak value of the lift coefficient reaches its maximum for $S_e = 0.8$ and then decreases. This means that maximum synchronization between the vortex shedding frequency and the cylinder oscillation frequency takes place for $S_e = 0.8$ and then it gradually decreases with increasing oscillating frequency. Corresponding power-spectra shows a single peak for $S_e = 0.6, 0.8$ and $1.0$, as expected, but the position of the peak value gets shifted with increasing $S_e$. This means that the Strouhal number increases with increase in $S_e$, which basically describes the increase in vortex shedding frequency. This is further confirmed by the streakline patterns of $S_e = 0.6, 0.8$ and $1.0$.
+%The position of attached vortices and vortex shedding pattern has changed as compared to the case of $\alpha_m = 0.5$ and horizontal spacing between the vortices in the vortex street formed behind the cylinder has decreased. Plots of lift and drag coefficients and power spectra show more than one frequency peaks but till time $t = 0.4$ only (apart from the previous case where more than one peak was noticed for $S_e = 0.6$ also).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.9\linewidth]{lift-drag-power-streaklines_f0-2_0-4_a2-0.eps}
+\includegraphics[width=0.9\linewidth]{lift-drag-power-streaklines_f0-6_0-8_a2-0.eps}
+\includegraphics[width=0.87\linewidth]{lift-drag-power-streaklines_f1-0_a2-0.eps}
+\caption{Plots of lift-drag coefficients (left); power spectra of lift coefficients (middle) and streaklines (right) for $Re = 200$, $\alpha_m = 2.0$ with various $S_e$ values.}
+\label{lift-drag_power_streaklines_a2-0}
+\end{figure}
+
+For $\alpha_m = 2.0$ (Fig. \ref{lift-drag_power_streaklines_a2-0}), streakline patterns are almost similar to that of $\alpha_m = 1.0$, however the vortex shedding frequency has increased in this case. The time history of lift and drag coefficients show a regular sinusoidal pattern for the cylinder oscillating frequency as low as $S_e = 0.4$ and the same sinusoidal pattern can be seen for $S_e = 0.6, 0.8$ and $1.0$. This indicates that the lock-on phenomenon exists for a longer period of time for this $\alpha_m$. Like $\alpha_m = 1.0$, here also the peak value of the lift coefficient reaches its maximum for $S_e = 0.8$, but the magnitude is more in this case. Corresponding power-spectra exhibits one single peak and its position is gradually shifted towards the positive $x$-direction, as seen in the previous case.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.9\linewidth]{lift-drag-power-streaklines_f0-2_0-4_a4-0.eps}
+\includegraphics[width=0.9\linewidth]{lift-drag-power-streaklines_f0-6_0-8_a4-0.eps}
+\includegraphics[width=0.9\linewidth]{lift-drag-power-streaklines_f1-0_a4-0.eps}
+\caption{Plots of lift-drag coefficients (left); power spectra of lift coefficients (middle) and streaklines (right) for $Re = 200$, $\alpha_m = 4.0$ with various $S_e$ values.}
+\label{lift-drag_power_streaklines_a4-0}
+\end{figure}
+
+In the case of $\alpha_m = 4.0$, flow patterns are completely different from the previous observed cases. Fig. \ref{lift-drag_power_streaklines_a4-0} shows the profiles of lift-drag coefficients, corresponding power-spectra of lift coefficients and streakline contours for fully developed flows at $\alpha_m = 1.0$ and $Re=200$ with different $S_e$ values, ranging from 0.2 to 1.0. In this case, all the considered oscillating frequencies show more than one peaks in their corresponding lift and drag profiles, which means flow never reaches the ``lock-on" phenomenon for these values of $S_e$. This can be further confirmed by their power-spectra, where the distance between the two peaks corresponding to $S_f$ and $S_v$ gradually increases with increasing $S_e$. The streaklines becomes more complex and a pair of vortices with opposite signs shed from both sides of the cylinder alternately. Moreover, the vortex shedding frequency increases with increasing $S_e$.
+%a vortex pair, a small companion vortex to the main vortex is shed during oscillation cycles. For all the frequencies considered here, more than one peak is seen excited in the power spectra. The dominant peak corresponds to $S_f$ and weaker one to $S_v$. Uneven amplitude of lift coefficient curves report the shedding of the vortices with unequal strength.
+
+
+%Further increase in the rotational parameter, $\alpha_m = 6.0$ (Fig. \ref{lift-drag_power_streaklines_a6-0}), flow shows interesting streakline patterns. In this case, a linked vortex pair with opposite circulations generate alternately from upper and lower half of the cylinder. The frequency of vortex shedding of the linked vortex pair increase with increasing $S_e$. Like $\alpha_m = 4.0$, in this case also flow does not reach to the ``lock-on" phase for the considered values of $S_e$, but the maximum distance between the two peaks corresponds to $S_f$ and $S_v$ reaches at $S_e = 0.8$ and then it decreases. These means there may be a possibility of flow reaching ``lock-on" phase for higher values of $S_e$ which are not considered here. All the $S_e$ values, considered here, show more than one peaks in their corresponding lift and drag profiles, as expected from the other two plots.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{lift-drag-power-streaklines_f0-2_0-4_a6-0.eps}
+\includegraphics[width=\linewidth]{lift-drag-power-streaklines_f0-6_0-8_a6-0.eps}
+\includegraphics[width=0.98\linewidth]{lift-drag-power-streaklines_f1-0_a6-0.eps}
+\caption{Plots of lift-drag coefficients (left); power spectra of lift coefficients (middle) and streaklines (right) for $Re = 200$, $\alpha_m = 6.0$ with various $S_e$ values.}
+\label{lift-drag_power_streaklines_a6-0}
+\end{figure}
+
+For further increase in the rotational parameter $\alpha_m$ to  6.0 (Fig. \ref{lift-drag_power_streaklines_a6-0}), flow shows interesting streakline patterns. In this case, a linked vortex pair with opposite circulations generate alternately from upper and lower half of the cylinder. The frequency of vortex shedding of the linked vortex pair increase with increasing $S_e$. Like $\alpha_m = 4.0$, in this case also flow does not reach to the ``lock-on" phase for the considered values of $S_e$, but the maximum distance between the two peaks corresponds to $S_f$ and $S_v$ reaches at $S_e = 0.8$ and then it decreases. This means that there may be a possibility of the flow reaching ``lock-on" phase for higher values of $S_e$ which are not considered here. All the $S_e$ values, considered here, show more than one peaks in their corresponding lift and drag profiles, as expected from the other two plots.
+
+%\subsection{Flow dynamics for $S_e = 2.0$ and $3.0 \leq \alpha_m \leq 10.0$}
+%\clearpage
+\subsubsection*{Fully developed flows for higher $\alpha_m$ values}
+Here we study the effect of higher peak oscillation rates on the flow phenomena. Computations are carried out for higher $\alpha_m$ values, ranging from $3.0$ to $10.0$ with fix $S_e = 2.0$ for $Re = 200$. Streaklines are plotted (in Fig. \ref{streaklines_f2-0_a3-0_10-0}) after the wake becomes a fully developed flow. A periodic flow pattern with vortices developing alternatively from the upper and lower side of the cylinder is seen in each case, eventually leading to the formation of the famous Von-K$\acute{\rm a}$rm$\acute{\rm a}$n vortex street. With the increasing values of $\alpha_m$, vortex shedding phenomena slightly changes in the downstream. Vortices are shed alternately and periodically from the top and bottom sides of the cylinder, but they are gradually ``pushed away" by the increasing cylinder oscillation, forming two rows of vortices in the wake. Fig. \ref{lift-drag_f2-0_a3-0_10-0} plots time history of lift and drag coefficients. The figure shows regular sinusoidal spectrum for all $\alpha_m$. But a close inspection reveals that one single peak is developed for $\alpha_m \leq 5.0$, but then another small peak is found to grow in the time history of lift coefficient. This certainly indicates that two rows of vortices that are shed from top and bottom side of the cylinder do not have same vortex shedding frequency for $\alpha_m > 5.0$. This can be further confirmed by the corresponding power-spectra (Fig. \ref{power_f2-0_a3-0_10-0}) which shows a single peak for $\alpha_m \leq 5.0$ and two peaks for the higher values of $\alpha_m$. The dominant peak corresponds to $S_f$ and the weaker one corresponds to the vortex shedding frequency $S_v$. As the forcing frequency is same for all the cases considered here, the position of the dominating peak and the weaker one remains same for all the cases, only the amplitude of vortex shedding frequency, $S_v$, increases with increasing $\alpha_m$. All these studies confirm that the flows show lock-on phenomenon for $\alpha_m \leq 5.0$, but further increase in peak rotational rate gradually destroys the lock-on phenomenon. This cannot be observed clearly from the streakline contours of the flows. To know the effect of the higher values of $\alpha_m$ in the near wake, we study the solid surface vorticity and evaluation of $u$-velocity along $\theta=0^\circ$ line and $v$-velocity profile along $\theta = 90^\circ$ line (Fig. \ref{u_w-plot_f2-0_a3-0_10-0}). Computations are carried out for the same time levels considered in the streakline plots in Fig. \ref{streaklines_f2-0_a3-0_10-0}. The $u$-velocity profiles for each case takes almost a ``S"-shape along the positive $x$-axis with almost no negative values. This means no circulation takes place along the $\theta = 0^\circ$ line and the vortices are shedding from upper and lower part of the $\theta = 0^\circ$ line. On the other hand, $v$-velocity profiles show two opposite peaks with increasing  $\alpha_m$. This indicates that with increasing peak rotational rate, $\alpha_m$, a pair of vortices is developing from the top of the cylinder. This can be further confirmed by the corresponding solid surface vorticity plots, which show two opposite peaks between $30^\circ \leq \theta \leq 120^\circ$ for higher $\alpha_m$. One can also observe that the magnitude of the $-\omega$ is strictly decreasing with increasing peak rotational rate, maintaining almost same type of profiles for all other $\alpha_m$ values.
+%The highest and lowest values of vorticity are roughly at the same location both on the upper and lower surface of the cylinder and these values increase with increasing $\alpha_m$. From this surface vorticity plots one can also observe that the minimum value occurs roughly in the third quadrant.
+
+\begin{figure}[htbp]
+\centering
+\begin{tabular}{c c}
+\subfigure  {\includegraphics[scale=0.35]{streaklines_f2-0_a3-0.eps}} &
+ \subfigure {\includegraphics[scale=0.35]{streaklines_f2-0_a4-0.eps}} \\
+\subfigure  {\includegraphics[scale=0.35]{streaklines_f2-0_a5-0.eps}} &
+ \subfigure {\includegraphics[scale=0.35]{streaklines_f2-0_a6-0.eps}} \\
+\subfigure  {\includegraphics[scale=0.35]{streaklines_f2-0_a7-0.eps}} &
+ \subfigure {\includegraphics[scale=0.35]{streaklines_f2-0_a8-0.eps}} \\
+\subfigure  {\includegraphics[scale=0.35]{streaklines_f2-0_a9-0.eps}} &
+ \subfigure {\includegraphics[scale=0.35]{streaklines_f2-0_a10-0.eps}}
+\end{tabular}
+\caption{Streaklines for $Re = 200$, $S_e = 2.0$ with various $\alpha_m$ values.}
+\label{streaklines_f2-0_a3-0_10-0}
+\end{figure}
+
+%\addtocounter{figure}{-1}
+%\begin{figure}[htbp]
+%\centering
+%\begin{tabular}{c c}
+%%\subfigure  {\includegraphics[scale=0.25]{streaklines_f2-0_a3-0.eps}} &
+%% \subfigure {\includegraphics[scale=0.25]{streaklines_f2-0_a4-0.eps}} \\
+%\subfigure  {\includegraphics[scale=0.36]{streaklines_f2-0_a5-0.eps}} &
+% \subfigure {\includegraphics[scale=0.36]{streaklines_f2-0_a6-0.eps}} \\
+%\subfigure  {\includegraphics[scale=0.36]{streaklines_f2-0_a7-0.eps}} &
+% \subfigure {\includegraphics[scale=0.36]{streaklines_f2-0_a8-0.eps}} \\
+%\subfigure  {\includegraphics[scale=0.36]{streaklines_f2-0_a9-0.eps}} &
+% \subfigure {\includegraphics[scale=0.36]{streaklines_f2-0_a10-0.eps}}
+%\end{tabular}
+%\caption{Streaklines for $Re = 200$, $S_e = 2.0$ with various $\alpha_m$ values.}
+%%\label{streaklines_f2-0_a3-0_10-0}
+%\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+\begin{tabular}{c c}
+\subfigure {\includegraphics[width=0.5\textwidth]{lift-drag_f2-0_a3-0.eps}} &
+\subfigure{\includegraphics[width=0.5\textwidth]{lift-drag_f2-0_a4-0.eps}} \\
+\subfigure{\includegraphics[width=0.5\textwidth]{lift-drag_f2-0_a5-0.eps}} &
+\subfigure {\includegraphics[width=0.5\textwidth]{lift-drag_f2-0_a6-0.eps}} \\
+\subfigure{\includegraphics[width=0.5\textwidth]{lift-drag_f2-0_a7-0.eps}} &
+ \subfigure{\includegraphics[width=0.5\textwidth]{lift-drag_f2-0_a8-0.eps}} \\
+ \subfigure {\includegraphics[width=0.5\textwidth]{lift-drag_f2-0_a9-0.eps}} &
+\subfigure{\includegraphics[width=0.5\textwidth]{lift-drag_f2-0_a10-0.eps}}
+\end{tabular}
+\caption{Lift and Drag coefficients for $S_e = 2.0$ and different $\alpha_m$ values.}
+\label{lift-drag_f2-0_a3-0_10-0}
+\end{center}
+\end{figure}
+
+%\addtocounter{figure}{-1}
+%\begin{figure}[htbp]
+%\begin{center}
+%\begin{tabular}{c c}
+%%\subfigure {\includegraphics[width=0.5\textwidth]{lift-drag_f2-0_a3-0.eps}} &
+%%\subfigure{\includegraphics[width=0.5\textwidth]{lift-drag_f2-0_a4-0.eps}}
+%\subfigure{\includegraphics[width=0.5\textwidth]{lift-drag_f2-0_a5-0.eps}} &
+%\subfigure {\includegraphics[width=0.5\textwidth]{lift-drag_f2-0_a6-0.eps}} \\
+%\subfigure{\includegraphics[width=0.5\textwidth]{lift-drag_f2-0_a7-0.eps}} &
+% \subfigure{\includegraphics[width=0.5\textwidth]{lift-drag_f2-0_a8-0.eps}} \\
+% \subfigure {\includegraphics[width=0.5\textwidth]{lift-drag_f2-0_a9-0.eps}} &
+%\subfigure{\includegraphics[width=0.5\textwidth]{lift-drag_f2-0_a10-0.eps}}
+%\end{tabular}
+%\caption{Contd.. Lift and Drag coefficients for $S_e = 2.0$ and different $\alpha_m$ values.}
+%%\label{lift-drag_f2-0_a3-0_10-0}
+%\end{center}
+%\end{figure}
+
+
+\begin{figure}[htbp]
+\begin{center}
+\begin{tabular}{c c}
+\subfigure {\includegraphics[width=0.38\textwidth]{power_f2-0_alfa_3-0.eps}} &
+\subfigure{\includegraphics[width=0.38\textwidth]{power_f2-0_alfa_4-0.eps}} \\
+\subfigure{\includegraphics[width=0.38\textwidth]{power_f2-0_alfa_5-0.eps}} &
+ \subfigure {\includegraphics[width=0.38\textwidth]{power_f2-0_alfa_6-0.eps}} \\
+\subfigure{\includegraphics[width=0.38\textwidth]{power_f2-0_alfa_7-0.eps}} &
+ \subfigure{\includegraphics[width=0.38\textwidth]{power_f2-0_alfa_8-0.eps}} \\
+ \subfigure {\includegraphics[width=0.38\textwidth]{power_f2-0_alfa_9-0.eps}} &
+\subfigure{\includegraphics[width=0.38\textwidth]{power_f2-0_alfa_10-0.eps}}
+\end{tabular}
+\caption{Power spectra for $S_e = 2.0$ and different $\alpha_m$ values.}
+\label{power_f2-0_a3-0_10-0}
+\end{center}
+\end{figure}
+
+\begin{figure}[htbp]
+\begin{center}
+%\begin{tabular}{c c c}
+{\includegraphics[scale=0.35]{u_vs_x_f2-0_a0-5-10-0.eps}}
+{\includegraphics[scale=0.35]{v_vs_y_f2-0_a0-5-10-0.eps}}
+{\includegraphics[scale=0.35]{vorticity_theta_f2-0_a0-5-10-0.eps}}
+%\end{tabular}
+\caption{Evolution of (a) $u$-velocity along $\theta=0^\circ$ line (b) $v$-velocity profile along $\theta = 90^\circ$ line and (c) solid surface vorticity for $Re = 200$, $S_e = 2.0$ with various $\alpha_m$ values.}
+\label{u_w-plot_f2-0_a3-0_10-0}
+\end{center}
+\end{figure}
+
+\clearpage
+\newpage
+\subsection{Flow behavior for $Re = 500$}
+For a fixed $Re = 500$, particular values of $S_e  = \pi/6, \pi/3$ and $\pi/2$ for $\alpha_m = 1$ are chosen due to already established numerical results in the literature. Our results agree very well with those reported by Dennis \cite{dennis2000} using the same flow parameters.
+
+\begin{figure}[htbp]
+\begin{center}
+\begin{tabular}{c c}
+\subfigure {\includegraphics[scale=0.45]{pi-by-6_t-24_vorticity.eps}} &
+\subfigure{\includegraphics[scale=0.45]{pi-by-6_t-26_vorticity.eps}}  \\
+ \subfigure {\includegraphics[scale=0.45]{pi-by-6_t-28_vorticity.eps}} &
+\subfigure{\includegraphics[scale=0.45]{pi-by-6_t-30_vorticity.eps}} \\
+ \subfigure {\includegraphics[scale=0.45]{pi-by-6_t-32_vorticity.eps}} &
+\subfigure{\includegraphics[scale=0.45]{pi-by-6_t-36_vorticity.eps}}
+\end{tabular}
+\caption{Vorticity contours for $S_e = \pi/6$ and $\alpha_m = 1.0$ at different time levels.}
+\label{re500_pi-by-6}
+\end{center}
+\end{figure}
+
+In Fig. \ref{re500_pi-by-6}, vorticity contours are shown for forcing frequency $S_e = \pi/6$ and $\alpha_m = 1.0$ for $Re = 500$. Results are shown at few particular instants covering full rotatory oscillation of the cylinder where negative and positive vortices are represented by dotted and dashed lines respectively. As the cylinder starts to oscillate in one side, a clockwise vortex is seen growing at the bottom of the cylinder at time $t = 24$. This gets detached with time at $t = 26$. This phenomenon is reported till $t = 28$ where a negative wake is seen developing near to the upper boundary of the cylinder. This wake rolls up to form a negative vortex which is ready to detach from the upper boundary of the cylinder at $t = 30$. This is that particular instant where the cylinder has just completed its first half cycle. Now the cylinder starts to oscillate in opposite direction for the next half cycle. As we can see that contours at times $t = 30$ and $t =32$ are the mirror image like patterns of contours at times $t = 24$ and $t = 26$ respectively, this means that a similar shedding phenomenon will be repeated for this negative vortex too. We note that the flow patterns exhibited at time $t = 36$ are almost the same as at time $t = 24$. This reports the initiation of a similar flow phenomenon after this particular instant. In Fig. \ref{re500_lift-drag}(a), lift and drag coefficients are plotted with time to help us to gain some more insight into the phenomenon exhibited here. Near sinusoidal oscillation of the corresponding peaks also show that the flow patterns are almost periodic.
+
+\begin{figure}[htbp]
+\begin{center}
+\begin{tabular}{c c}
+\subfigure[] {\includegraphics[scale=0.23]{pi-by-6_re500_lift-drag.eps}} &
+\subfigure[] {\includegraphics[scale=0.23]{pi-by-3_re500_lift-drag.eps}} \\
+\subfigure[] {\includegraphics[scale=0.23]{pi-by-2_re500_lift-drag.eps}}
+\end{tabular}
+\caption{Lift and drag coefficients for (a) $S_e = \pi/6$ (b) $S_e = \pi/3$ and (c) $S_e = \pi/2$.}
+\label{re500_lift-drag}
+\end{center}
+\end{figure}
+
+\begin{figure}[htbp]
+\begin{center}
+\begin{tabular}{c c}
+\subfigure {\includegraphics[scale=0.4]{pi-by-3_t-24_vorticity.eps}} &
+\subfigure{\includegraphics[scale=0.4]{pi-by-3_t-26_vorticity.eps}}  \\
+ \subfigure {\includegraphics[scale=0.4]{pi-by-3_t-28_vorticity.eps}} &
+\subfigure{\includegraphics[scale=0.4]{pi-by-3_t-30_vorticity.eps}}
+\end{tabular}
+\caption{Vorticity contours for $S_e = \pi/3$ and $\alpha_m = 1.0$ at different time levels.}
+\label{re500_pi-by-3}
+\end{center}
+\end{figure}
+
+\begin{figure}[htbp]
+\begin{center}
+\begin{tabular}{c c}
+\subfigure {\includegraphics[scale=0.4]{pi-by-2_t-25_vorticity.eps}} &
+\subfigure{\includegraphics[scale=0.4]{pi-by-2_t-26_vorticity.eps}}  \\
+\subfigure {\includegraphics[scale=0.4]{pi-by-2_t-27_vorticity.eps}} &
+\subfigure{\includegraphics[scale=0.4]{pi-by-2_t-28_vorticity.eps}} \\
+\subfigure {\includegraphics[scale=0.4]{pi-by-2_t-31_vorticity.eps}} &
+\end{tabular}
+\caption{Vorticity contours for $S_e = \pi/2$ and $\alpha_m = 1.0$ at different time levels.}
+\label{re500_pi-by-2}
+\end{center}
+\end{figure}
+
+Instantaneous vorticity contours are displayed for $S_e$ taking value $\pi/3$ in Fig. \ref{re500_pi-by-3} covering a full oscillation cycle. We can observe positive and negative vortices convecting downstream forming a vortex street. Time $t = 24$ and $t = 26$ depict the state of flow during half oscillation cycle at two equal intervals of time. One positive vortex is shed from the lower side of cylinder at $t = 28$.  Another negative vortex is detached from the upper boundary during the next half cycle that is till the completion of one full oscillation cycle at $t = 30$. We are able to notice a decrease in the horizontal and vertical spacing between the vortices in the vortex street formed behind the cylinder as compared to the lower value of $S_e = \pi/6$. This is in accordance to the phenomenon stated by \cite{dennis2000}. Corresponding lift and drag coefficient curves are plotted with time Fig. \ref{re500_lift-drag}. It takes few moments for the cylinder to settle down to some near periodic state, can be identified by observing these peaks during initial times.
+
+Further, we have increased the value of $S_e$ to $\pi/2$ to prove the efficacy of our scheme in capturing the flow phenomena accurately at such a higher value. Vorticity contours are plotted covering the complete seventh oscillation cycle. As the cylinder starts to oscillate for the seventh time, at $t = 25$, we can observe a double co-rotating vortex pair in the vortex street near to the cylinder. This pair gets washed away with stream till the completion of full cycle, a new vortex pair is observed captured by our scheme during rotation in its eighth cycle at $t = 31$. This is synonymous to a distinct flow feature reported by Dennis \cite{dennis2000} at this frequency in this particular cycle. Superimposed lift and drag coefficient curves in Fig. \ref{re500_lift-drag}(c) show a decrease in the amplitude of fluctuating peaks as compared to the previous lower $S_e$ cases.
+
+\section{Conclusion}
+In this paper, we study the vortex shedding phenomena, for the case of flow past a rotationally oscillating circular cylinder, at the initial stages of the flow and for the case when flow reaches the state of dynamical stability, for $Re=200$ with a wide range of $S_e$ and $\alpha_m$. We use an HOC-based scheme, specifically designed for this problem. We first study the grid and time independence of our results and validate our scheme by comparing our computed results for $Re = 150, 185$ and $500$, with the corresponding experimental and numerical results existing in the literature. We then study and analyze our results for $Re = 200$, with different values of $S_e$, ranging from $0.2$ to $2.0$ and $\alpha_m$, ranging from $0.5$ to $10.0$. In this process, we investigate streamline patterns, streaklines, lift and drag coefficients and their power spectra, $u$-velocity profiles along $\theta = 0^\circ$, $v$-velocity profiles along $\theta = 90^\circ$ and solid surface vorticity. We first study the flow phenomena near the surface of the cylinder for the initial stages of the flow. The time levels are taken in such a way that rotational oscillation of the cylinder is equal to the peak rotation rate (i.e., $\alpha (t) = \alpha_m$) for $S_e = 1.0$. We observed very complex flow phenomena for higher $\alpha_m$. We then study and analyze the fully developed flows for $\alpha_m$ ranging from $0.5$ to $6.0$ and $S_e$ ranging from $0.2$ to $1.0$. Our study reveals that ``lock-on" phenomenon gradually disappears with increasing $\alpha_m$ for $S_e \leq 1.0$. We also observed very interesting streakline patterns with increasing $\alpha_m$. At $\alpha_m = 6.0$, we observe a linked vortex pair with opposite circulations generated alternately from upper and lower half of the cylinder. At last, we study the flow phenomena for high $\alpha_m$ values, as high as $\alpha_m = 10.0$ with $S_e = 2.0$. A periodic flow pattern with vortices developing alternatively from the upper and lower side of the cylinder is seen in each case, eventually leading to the formation of the famous Von-K$\acute{\rm a}$rm$\acute{\rm a}$n vortex street. However, the vortices shedding from upper and lower sides of the cylinder are gradually ``pushed away" by the increasing cylinder oscillation, forming two rows of vortices in the wake.
+
+We then investigate the vortex shedding phenomena for $Re = 500$  taking $S_e = \pi/6, \pi/3, \pi/2$ and $\alpha_m = 1.0$. When $S_e = \pi/6$, one positive vortex is shed during the anticlockwise rotation and a negative vortex follows the similar pattern during the other half cycle. The vortex shedding phenomenon remained almost the same for $S_e = \pi/3$ but a significant decrease in the horizontal spacing between different vortices in the vortex street is observed. Further increase in the forcing frequency $S_e$ to $\pi/2$ has introduced a different feature in the wake that is the generation of an attached co rotating vortex pair. Moreover, peaks of lift and drag coefficients have reported a decrease in the amplitude of fluctuation with increase in value of $S_e$.
+
+Therefore, the present study provides insight into the wake characteristics associated with vortex shedding phenomena from a rotationally oscillating circular cylinder due to fluid-structure interactions and consolidates previous related observations, often unaccounted for, found in the published literature.
+
+\clearpage 

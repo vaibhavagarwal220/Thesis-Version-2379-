@@ -1,0 +1,150 @@
+
+
+\documentclass[draft,12pt,oneside]{iitmMyPhD}
+%\input{thesis_format}
+\usepackage[a4paper, breaklinks, hidelinks, linkcolor=blue, citecolor=red, linktocpage=true]{hyperref}
+%\usepackage{epstopdf, color, cite, float, subfigure, graphicx, verbatim, amsmath, amsthm, amssymb, txfonts, multirow, lscape, setspace, rotating}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{csquotes}
+%\usepackage{epstopdf}
+\usepackage{txfonts}
+\graphicspath{{figures/}}
+\usepackage{fancyheadings}
+%\usepackage{supertabular}
+\usepackage{a4wide}
+\usepackage{amssymb}
+\let\iint\relax
+\let\endiint\relax
+\let\iiint\relax
+\let\endiiint\relax
+\let\iiiint\relax
+\let\endiiiint\relax
+\let\idotsint\relax
+\let\endidotsint\relax
+\usepackage{amsmath}
+%\usepackage{floatrow}
+%\usepackage{float}
+%\usepackage[autostyle]{csquotes}
+%\usepackage{epstopdf}
+%\usepackage{epsfig}
+\usepackage{longtable}
+\usepackage{subfigure}
+%%%%%%%%%%% new package added
+%\usepackage{makecell}
+%\renewcommand\theadalign{cb}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\usepackage{bm}
+%%\setlength{\topmargin}{-1.0cm}
+\setlength{\topmargin}{1.0cm}
+\setlength{\textwidth}{15.42cm}
+%% \setlength{\textwidth}{16.40cm}  % TO SAVE PAGES WHILE PREPARING ROUGH DRAFT.
+%\setlength{\textheight}{22cm}     % FOR DOTMATRIX PRINTER.
+\setlength{\textheight}{23cm}
+%\setlength{\textheight}{21cm}
+%\setlength{\textheight}{25cm}    % TO SAVE PAGES WHILE PREPARING ROUGH DRAFT.
+\setlength{\oddsidemargin}{0.52cm}
+\setlength{\evensidemargin}{0.6cm}
+\setlength{\headheight}{0.0cm}
+\setlength{\headsep}{0.0cm}
+\setlength{\parskip}{0.0cm}
+\setcounter{secnumdepth}{5}
+\setcounter{tocdepth}{5}
+\renewcommand{\baselinestretch}{1.5}
+
+\begin{document}
+%--------------------------------------------------------------------------
+% ORDER OF THESIS CONTENTS SUGGESTED BY THE INSTITUTE.
+%- - - - - - - - - - - - - - - - - - - - - - - - - - -
+% cover page
+% inside cover page
+% Quotations (if any)
+% dedication page
+% certificate
+% acknowledgements
+% abstract
+% table of contents
+% list of tables
+% list of figures
+% glossary (if any)
+% abbreviations
+% notation
+% chapters
+% appendices
+% references
+% list of papers based on thesis
+% curriculum Vitae    ->   (Only while submitting A5 copy, finally)
+% Doctoral committee  ->   (Only while submitting A5 copy, finally)
+%--------------------------------------------------------------------------
+% TO GET BOLDFACE GREEK LETTERS IN THE MAIN TEXT USE:
+% ${\boldmath \mbox{$\Xi$}} $
+%--------------------------------------------------------------------------
+
+%\renewcommand{\baselinestretch}{1.5}
+	%\input{dedicate.tex}    % DEDICATION PAGE
+	% \regularpage
+	% \specialpage
+
+   \input{titlePage}
+    %\input{quote}
+    
+    
+%%%%%%% uncomment this portion %%%%%%%%%%%
+	\input{copyright}
+   \input{dedication}
+   \input{Declare_scholar}
+  \input{certify}
+  \input{thesis_cert.tex}
+ \pagestyle{plain}
+         \addcontentsline{toc}{chapter}{Acknowledgement}
+         \pagenumbering{roman} \setcounter{page}{1}   
+        \input{acknowledgement_v3} 
+         \addcontentsline{toc}{chapter}{Abstract}
+      \input{abstract.tex}
+\tableofcontents
+        \addcontentsline{toc}{chapter}{List of Tables}
+	 \listoftables	
+	 \newpage
+	 ~\clearpage
+        \addcontentsline{toc}{chapter}{List of Figures}
+	    \listoffigures
+	 \input{abbreviation_v1.tex}
+	
+	   
+	\pagenumbering{arabic} \setcounter{page}{1}
+    \include{Chap1/Ch1}  %% Introduction/LITERATURE REVIEW
+    \newpage
+    ~\clearpage
+	\include{Chap2/Ch2}  %% 
+	\newpage
+	~\clearpage
+	\include{Chap3/Ch3}  %% 
+    \include{Chap4/Ch4}  %% 
+    \newpage
+    ~\clearpage
+    \newpage
+    ~\clearpage
+	\include{Chap5/Ch5}  %% 
+	\include{Chap6/Ch6}  %% Simulation Results AND DISCUSSIONS
+	\newpage
+	~\clearpage
+    \include{Chap7/Ch7}  %% Conclusions
+    \newpage
+    ~\clearpage
+    \newpage
+    ~\clearpage
+    %\input{appendix}
+	%\include{publications}
+	
+%%%%%%%%%%%%%%%% upto this %%%%%%%%%%%%%%%
+
+%KEEP BIBLIOGRAPHY IN THESIS.BIB FILE
+\bibliographystyle{ieeetr}
+\bibliography{Thesis}
+
+\renewcommand{\baselinestretch}{1.3}
+%\addcontentsline{toc}{chapter}{Bibliography}
+%\bibliography{/ag2/chaveli/tex/thesis/chap2/biblio/text}
+%\input{references}
+\end{document}
+

@@ -1,0 +1,17 @@
+\clearpage
+\thispagestyle{empty}
+~\clearpage
+\chapter{Conclusion and Future Scope}\label{chap7_conclusion}
+\section{Conclusion}
+The design improves the conversion speed and power consumption by utilising a hybrid ADC with a binary search approach. The ADC does not use any background offset calibration or digital error correction and is suitable for time-interleaved architectures. The design uses segmented-split capacitor array CDAC to save area and achieve fast settling time. Also, an inverter based comparator provides with very good performance at high frequencies with lower power consumption. The flash-SAR hybrid architecture can provide overall better performance at the sampling rates in excess of GHz. The design can further be optimized for higher resolutions. Moreover, as the design uses a `digital' comparator, it will scale very easily with smaller technology nodes. The design can be further used for high speed and medium resolution applications viz. RF recievers, DSP serial links.
+
+\section{Future Scope}
+The flash-SAR hybrid ADC architecture is relatively new and there is further scope of improvement in the design. Following points illustrate this point.
+\begin{itemize}
+	\item The design can be further extended to include more bits per cycle increasing the resolution, at the cost of hardware.
+	\item A single CDAC array can be used instead of 7 seperate CDACs, which can save power and area.
+	\item A resistive ladder DAC can also be used similar to a flash ADC, which will reduce the complexity of the digital circuitry.
+	\item The design can be easily used for a time-interleaved ADC, providing even better speeds with medium to high resolution. 
+\end{itemize}
+
+\clearpage 

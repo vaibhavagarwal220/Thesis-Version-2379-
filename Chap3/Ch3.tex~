@@ -1,0 +1,854 @@
+\graphicspath{{figures/}}
+
+\chapter{Characterizing the effects of TCP Initial Window}
+ \label{chap:effect-of-IW}
+
+\section{Introduction}
+ 
+     TCP's slow-start algorithm plays an important role in today's
+Internet. Designed to slowly probe the network for available bandwidth,
+current standard mandates TCP flows to start with an initial-window (IW)
+size of (at most) four segments~\cite{rfc3390}. While this appeared
+reasonable a decade back, given the speed of the today's networks, it is
+too low a value that the research community has for sometime argued the
+need to increase the size of TCP IW. This argument is more important in the
+face of the mice-elephant phenomenon as small flows are unduely affected by
+the small value of IW. We note that a comprehensive study on this front is
+missing.  In this chapter, we attempt to build that gap, by analyzing the
+affects of increasing IW on various important parameters correlated to the
+performance of flows. In particular, given the mice-elephant phenomenon, we
+focus on how the response times of small TCP flows are affected with
+increasing IW.
+
+
+  Using both simulations and analytical techniques, we carry out studies
+for the performance -- the response times -- of the small flows. We perform
+simulations in ns-2, and using a number of metrics, analyze the performance
+of flows under single constant value of IW-size. Through deep analysis,
+we observe that the single constant value of IW-size for all flows
+optimizes some performance metrics, while it does so, by affecting other
+metrics.  What we deduce from the simulation results is that, no single
+value of IW-size is seen to improve the performance, when compared using
+the above metrics. This motivates us again to consider IW as a function
+rather than a constant one.
+   
+
+
+We then develop a stochastic model, the {\em integrated packet-flow} model
+to study the effects of IW on burstiness of TCP traffic, queue-length
+distribution, network stability (in terms of average packet-loss
+probability), and response times of TCP flows. We quantify the effects of
+increasing IW-size on batch-size ({\em cwnd}) distribution of the TCP
+traffic. One way to characterize the burstiness of the TCP traffic is to
+consider the batch-interarrival times and batch-sizes. Here, we directly
+relate the burstiness of the traffic produced by TCP, to the expected
+batch-size. To capture the burstiness of the traffic at the router buffer,
+we consider an $M^{X}/M/1/B$ queue, with $M^{X}$, the poisson arrival
+process of batches of variable size $X$, and $B$, the router buffer-size.
+We derive the expected number of RTTs (response time) for a TCP flow, using
+a model derived from the integrated packet-flow model.  The number of RTTs
+that a flow needs depends on average packet-loss probability and flow-size.
+The IW-size for which a flow achieves minimum number of RTTs is considered
+as optimal.  Our studies reveal that the optimal choice of IW for a flow
+depends on the network parameters such as bottleneck router's buffer-size,
+number of active TCP connections, bottleneck router's link-capacity, RTT,
+and flow-size. This motivates us to use IW as a function; furthermore, the
+IW for a new TCP connection can be a function of parameters at the end-host
+(flow-size), obtained from the network, or obtained from both network and
+end-host.  
+
+
+The rest of the chapter is organized as follows. In
+Section~\ref{sec:Simulations}, after listing the metrics for performance
+evaluation, we conduct simulation-based studies to understand the affects
+of IW-size on variou metrics. In Section~\ref{sec:TCP model}, we describe
+{\em integrated packet-flow model} and compute different performance
+metrics. We conclude the chapter in Section~\ref{sec:conclusions}. 
+
+
+
+\section{Analysis by Simulations}
+\label{sec:Simulations}
+
+In this section, we describe the parameters considered for analysis
+using simulation, and then explain the settings, before discussing the
+results.
+
+\subsection{Parameters Considered}
+
+The parameters that we consider in simulations are:
+
+\begin{enumerate}
+
+  \item \underline{Mean completion time}\footnote{We often use
+	`completion time' to refer to `response time'.} ($\overline{CT}$)
+	for small, large and all flows conditioned on flow-size.  Completion
+	time is the time between sending of first SYN packet to getting the
+	ACK for the last packet for a flow. Conditional mean completion
+	time, which we also use, is the mean completion time conditioned on
+	the flow-size.
+
+
+  \item \underline{Number of TCP spurious time-outs ($ST$)}
+	encountered by small and large flows. Note that, A spurious
+	timeout occurs when the RTT suddenly increases to a value that
+	exceeds RTO (determined through moving averages)~\cite{rfc6298}.
+	Any packet that is reordered beyond the a threshold number of
+	duplicate ACKs, is assumed to be lost and causes spurious fast
+	retransmission.  Spurious fast retransmission causes unnecessary
+	halving of the TCP {\em cwnd}. Spurious timeout also leads to
+	slow-start process. TCP sender assumes all outstanding packets
+	being lost and then  retransmits packets unnecessarily,
+	potentially congesting the network. 
+
+  \item \underline{Number of TCP retransmission time-outs ($RT$)}
+	encountered by small and large flows.
+
+  \item \underline{Retransmission rate ($RR$)} for small (${RR}_s$) and
+large (${RR}_l$) flows, defined as the percentage of the number of
+retransmitted packets to the actual number of packets transmitted, for
+flows in the considered size-range. 
+
+ \item  Mean completion time for range
+of flow-sizes.
+
+\item \underline{{\it Network Power}} for range of flows-sizes, defined as
+average goodput---application-file-size/completion-time---divided by mean
+completion time of flows in the considered size-range. This definition is
+similar to the one in RFC 2415~\cite{rfc2415}.
+
+
+\end{enumerate}
+
+ \subsection{Settings}
+  \label{sec:settings}	   
+
+Simulations are carried out in ns-2. The topology we used is
+shown in Fig.~\ref{fig:3-topology}. The bottleneck-link capacity is set to
+1 Gbps, and the link capacities of the source and destination nodes are
+set to 100 Mbps. The delays on the links are set such that base RTT
+(consisting of only propagation delay) is equal to 100 ms.  The
+buffer-size of bottleneck-link of data path  is set to the
+bandwidth-delay-product (1 Gbps $\times$ 100 ms). Drop-tail buffers are
+used at all nodes. The total number of flows is
+20,000. 15\% of flows are generated using Pareto distribution with shape
+parameter $\alpha$  as 1.1 and a mean flow-size of 1 MB, and remaining
+flows are generated using Exponential distribution with a mean flow-size
+of 20 KB.   
+   
+All flows are carried by TCP using the SACK version with times-tamps
+options set. The Packet-size is assumed constant, equal to 1 KB.
+
+\begin{figure}
+ %\subfigure[Retransmission Timeouts]{
+     \begin{minipage}{0.4\linewidth}
+          \centering
+          \includegraphics[scale=0.23]{figures/bottleneck.pdf}
+          \captionof{figure}{Single-Bottleneck Topology}
+         \label{fig:3-topology}
+     \end{minipage}
+   \qquad
+          \hspace{0.1cm}
+           %\subfigure[Congestion Cuts]{
+     \begin{minipage}{0.5\linewidth}
+           \centering
+           \resizebox{65mm}{!}{\includegraphics{CDF_flow-size}}
+           \captionof{figure}{Cumulative distribution function for flow-sizes} 
+          \label{fig:3-cdf}
+     \end{minipage}
+   %\vspace{-0.5cm}
+  \end{figure}
+
+   
+The cumulative distribution function of flow-size is shown in
+Fig.~\ref{fig:3-cdf}.  As the flows with size less than or equal to 60 KB
+constitute 80\% of the total number of generated-flows, any flow with
+flow-size less than or equal to 60 KB is considered to be a `small flow'
+and with size greater than 60 KB is considered to be a `large flow'.
+
+\subsection{Results}
+We analyze the affect of IW-size on various parameters here.
+
+\subsubsection*{Number of Retransmission Time-outs:}
+
+Table~\ref{table:parameters} shows the number of $RT$ for different
+IW-sizes, faced by all flows. ${RT}_s$ and ${RT}_l$ represent the $RT$ for
+small and large flows respectively. As expected, with increasing IW, number
+of retransmission time-outs increases.  Increasing IW-size for both small
+and large flows increases the burstiness of TCP traffic.  Burstiness can
+cause router buffer to overflow and that results in large number of
+packet-drops.  Due to large number of packet-drops, either small flows may
+not able to produce duplicate ACKs or retransmitted packet gets dropped,
+may cause retransmission timeouts. 
+
+\begin{table}[h]	
+  \centering	
+  \caption{Comparison of different parameters}
+  \resizebox{12cm}{!}{
+  \begin{tabular}{|l||c|c||c|c||c|c||c|c|}
+	\multicolumn{9}{}{} \\
+	\hline
+	IW & ${RT}_s$ & ${RT}_l$ & ${RR}_s$ & ${RR}_l$ & ${ST}_s$ & ${ST}_l$ & $\overline{CT_s}$ & $\overline{CT_l}$\\ \hline \hline
+	3 & 1475 & 618 & 0.4495 & 6.6758   &   24 & 60   & 0.8424 & 2.3263  \\ \hline       
+	8 & 1346 & 650 & 0.5361 & 8.8865   &   68 & 115  & 0.7048 & 2.1601 \\ \hline       
+	16 & 1442 & 649 & 0.6247 & 9.1910     & 48 & 67  & 0.6342 & 1.9521 \\ \hline      
+	32 & 1465 & 733 & 0.6720 & 9.4985     & 5 & 29   & 0.5875 & 1.7848  \\ \hline      
+	48 & 1713 & 818 & 0.7609 & 11.5080    & 2 & 26   & 0.6191 & 1.7154 \\  \hline      
+	64 & 1627 & 724 & 0.7407 & 10.6737    & 2 & 29   & 0.6033 & 1.5851  \\ \hline      
+	128 & 2327 & 1041 & 1.0450 & 15.9948   & 4 & 20  & 0.6953 & 1.5185 \\ \hline      
+	256 & 3186 & 1357 & 1.3740 & 21.4348   & 7 & 17  & 0.8155 & 1.5785 \\ \hline \noalign{\smallskip}       
+  \end{tabular}
+  \label{table:parameters}
+}
+\end{table}
+
+\subsubsection*{Retransmission Rate:}
+ 
+Table~\ref{table:parameters} shows the retransmission rate for small
+(${RR}_s$) and large flows ($RR_l$) with respect to IW-size. It depicts
+that retransmission rate increases by increasing IW. This may be due to
+fast retransmissions, retransmission timeouts and spurious
+retransmissions. Note that, $RR_l$ is considerably high in
+comparison to $RR_s$.
+
+\subsubsection*{Number of Spurious Time-outs:}
+  
+Table~\ref{table:parameters} also shows the number of spurious time-outs
+faced by small ($ST_s$) and large ($ST_s$) flows for varying IW-size.
+The number of spurious time-outs faced by all flows decreases with
+increasing IW-size. This may be due to the fact that large {\em cwnd}
+may result in small variation of round-trip-delays.
+
+\begin{comment}
+But there is an increment in
+$ST_s$ from IW-size of 3 packets to IW-size of 8 packets. As small flows
+do not have much data, they may attain small cwnd size in comparison to
+large flows. Due to large cwnd, large flows may cause higher burstiness.
+The higher burstiness at the bottleneck router may cause large variation
+in RTT for small flows.
+\end{comment}
+
+\subsubsection*{Mean Completion Time:}
+
+The last two columns of Table~\ref{table:parameters} show the mean completion
+time averaged for small flows ($\overline{CT}_s$), large flows
+($\overline{CT}_l$).  Large flows show decreasing completion time for
+increasing IW, as they take small number of rounds. The response times of small
+flows decrease by almost $300$ ms, when IW-size is increased from 3 to 32
+packets.  Beyond IW-size of 32, there is an increase in response times for
+small flows, possibly due to increasing packet-losses (with increasing value of
+IW beyond a point).  Fig.~\ref{fig:ci} plots the mean completion time for IW of
+3 and 32 packets, for 95\% confidence interval. Reduction in response time is
+clear for flows with sizes less than (around) 70 packets. The gain in response
+time reduces with increasing size.
+
+\begin{figure}[h]
+	  \centering
+	  \includegraphics[scale=0.7]{figures/ci-ct-3-32.pdf}
+	  \caption{95\% confidence interval for mean completion time}
+	  \label{fig:ci}
+  \end{figure}
+
+\begin{figure}
+ %\subfigure[Retransmission Timeouts]{
+     \begin{minipage}{0.4\linewidth}
+          \centering
+          \resizebox{65mm}{!}{\includegraphics{range_mct-1.pdf}}
+          \captionof{figure}{For IW-sizes of 3, 16, 32 packets}
+         \label{fig:3-avgmct}
+     \end{minipage}
+   \qquad
+         % \hspace{0.1cm}
+           %\subfigure[Congestion Cuts]{
+     \begin{minipage}{0.5\linewidth}
+           \centering
+           \resizebox{65mm}{!}{\includegraphics{range_mct-2.pdf}}
+           \captionof{figure}{For IW-sizes of 3, 48, 64 and 128 packets} 
+          \label{fig:3-avgmct1}
+     \end{minipage}
+   %\vspace{-0.5cm}
+  \end{figure}
+
+
+Figures~\ref{fig:3-avgmct} and~\ref{fig:3-avgmct1} plot the mean completion
+times of flows within different flow-size ranges. The improvement with
+increasing IW-size decreases as the flow-size increases. The figure also
+shows that {\it medium-size} flows have better improvement in mean
+completion time with large IW-size. 
+
+      
+Next, we use $\alpha$ as a threshold to define small flows (and thereby
+differentiate between small and large flows).  Fig.~\ref{fig:3-MeanCT2}
+shows $\overline{CT}_s$, the average of mean completion time for small
+flows, for different values of $\alpha$. Similar plot for mean
+completion time averaged over large flows, $\overline{CT}_l$, is shown
+in Fig.~\ref{fig:3-MeanCT3}. Observe that the trend is similar for
+different values of $\alpha$. 
+
+
+\begin{figure}
+ %\subfigure[Retransmission Timeouts]{
+     \begin{minipage}{0.4\linewidth}
+          \centering
+          \resizebox{65mm}{!}{\includegraphics{threshold_s.pdf}}
+          \captionof{figure}{For small flows}
+         \label{fig:3-MeanCT2}
+     \end{minipage}
+   \qquad
+         % \hspace{0.1cm}
+           %\subfigure[Congestion Cuts]{
+     \begin{minipage}{0.5\linewidth}
+           \centering
+           \resizebox{65mm}{!}{\includegraphics{threshold_l.pdf}}
+           \captionof{figure}{For large flows} 
+          \label{fig:3-MeanCT3}
+     \end{minipage}
+   %\vspace{-0.5cm}
+  \end{figure}
+
+
+Though the response times of small and large flows are reduced with
+increasing IW, we see that this is not monotonous. Increasing IW-size
+for small flows increases the {\em cwnd} size. If small flows with large
+{\em cwnd} size face packet-losses, then the loss can be recovered by
+fast retransmission instead of timeouts. IW-size larger than flow-size
+does not increase the burstiness of small flows. But higher burstiness
+due to large flows cause large number of packet-drops at the bottleneck
+router which increases the response times of small flows as well as
+large flows.
+
+\begin{figure}[H]
+	  \centering
+	  \includegraphics[scale=0.7]{figures/networkpower_fixed}
+	  \caption{Network power for both small and large flows}
+	  \label{fig:3-np}
+  \end{figure}
+ 
+\subsection{Discussions}
+
+Number of retransmission time-outs increases by increasing IW-size for all flows
+where as number of spurious time-outs decreases. Large IW-sizes increases the
+number of large congestion-windows, thereby also increasing burstiness at the
+router, causing buffer overflow and packet retransmissions. On the other hand,
+large IW-size for small flows helps to recover lost packets by fast
+retransmissions rather than timeouts, improving the response times.  As large
+flows spend most of their lifetimes in congestion-avoidance phase, large
+IW-size has negligible effect on large flows. Empirically, we find that no
+single value of IW-size gives optimal performance, when compared using various
+parameters such as number of retransmission time-outs, retransmission rate,
+number of spurious time-outs, mean completion times of flows, etc.. 
+
+
+
+\section{Analysis Using Integrated Packet-Flow Model}
+\label{sec:TCP model}
+
+   In this section, we describe the integrated packet-flow, and quantify
+the impact of increasing IW on the network as well as on the end-host.
+
+
+Fig.~\ref{fig:iterative} and~\ref{fig:sfsm_tcp} show integrated
+packet-flow model, consisting of two components: (i) a stochastic TCP model
+that derives batch-size distribution for a given flow-size distribution;
+(ii) a queueing model that determines different performance parameters. The
+load generated by TCP model is captured by the queueing model for
+calculating performance parameters which act as feed-back to TCP model.
+
+\begin{figure}[H]
+  \centering
+		\includegraphics[scale=0.3]{figures1/modeling.pdf}
+  \caption{Iterative solution approach}
+		\label{fig:iterative}
+\end{figure}
+
+
+\subsection{TCP Model} 
+
+In the stochastic TCP model (a modified version of the one proposed
+in~\cite{Garetto:2003:MSM:781027.781034:2003,Garetto:2008:ETA:1322586.1322984}),
+the number of packets transferred by a flow is assumed to follow
+Geometrical distribution, with a mean flow-size $\bar S$. 
+%The motivation of taking flow-size distribution as Geometric is due to the
+%memoryless property of the distribution. 
+The traffic intensity at the bottleneck-link at flow level is given by,
+\begin{equation}\label{first}
+ \rho = \frac{\chi\bar{S}P}{C}
+\end{equation} 
+where $\chi$ represents arrival rate of TCP flows, P the packet size,
+C the bottleneck-link capacity and $\bar S = 1/q$. The parameter q is
+the  probability of a packet to be the last packet in a TCP flow.
+
+The model describing the TCP window dynamics is shown in
+Fig.~\ref{fig:sfsm_tcp}.  It is a finite state model where each state
+corresponds to a state in TCP protocol, connected with probabilistic
+transitions that depend on loss-event probability.  The inputs to this
+model are flow-size distribution and initial value of loss-event
+probability, and the model derives the distribution of number of packets
+transmitted every RTT.  The loss of packets in a flow is assumed to be due
+to triple duplicate ACKs (and not due to timeouts).
+
+
+\begin{figure}[H]
+        \centering
+		      \includegraphics[scale=0.3]{figures1/sfsm_tcp.pdf}
+			\caption{TCP model}
+		    	\label{fig:sfsm_tcp}
+\end{figure}
+
+ 
+In Fig.~\ref{fig:sfsm_tcp}, the entry point to the TCP model is given by
+state E. The solid lines represent either transition from slow-start (SS)
+phase to congestion-avoidance (CA) phase in TCP protocol or transitions
+within CA phase by halving {\em cwnd}. The exit point can be any state in
+the diagram and is indicated by dotted lines that represents completion of
+packet transfer.  State $E$ represents a state that transfers a sequence of
+batches within SS phase before transiting to either exit state or a state
+in CA phase.  State $L_i$ where $i \in [2, ... , W_m]$, $W_m=BDP$,
+represents a state with batch-size i (linear growth).
+
+The parameters considered in this model are:
+\begin{itemize}
+  \item $W$, the slow-start threshold in terms of packets,
+  \item $q$, the probability of a packet to be the last packet in a TCP
+	flow,
+  \item $p$, the loss-event probability (probability of first loss 
+	in a window), and, 
+  \item $\bar p$, the average packet-loss probability among all transmitted packets
+\end{itemize}
+
+  Using memoryless property of the Geometric flow-size distribution, we can say:
+  \begin{itemize}
+  \item the probability that more than $i$ packets remain to be sent,
+	$M_q(i) = (1-q)^i$, and,
+  \item the probability that exactly $i$ packets remain to be sent, $R_q(i) = q(1-q)^{i-1}$. 
+  \end{itemize}
+
+ \subsubsection*{Transition Probabilities and Batch-Size Distribution:}
+  In this section, we describe transition probabilities necessary to solve
+the TCP model, and explain how to compute the batch-size sent in each state.
+
+ \paragraph*{Slow-Start without Loss:} Let the IW of a TCP flow be $y$. The
+maximum number of packets sent in state $E$ is given by, 
+ \begin{align}
+      h(W,y) &= y + y\times 2 + y\times 2^2 + ... + y\times
+2^{\biggl\lfloor\log_2\left(\frac{ \displaystyle W}{\displaystyle y}\right)\biggr\rfloor}
++W \nonumber \\ &= y\biggl(2^{\biggl\lfloor\log_2\biggl(\frac{\displaystyle
+W}{\displaystyle y}\biggr)\biggr\rfloor+1}-1\biggr)+W
+ \end{align} 
+  
+ If more than $h(W,y)$ packets remain to be sent, a transition occurs from
+$E$ to $L_{W+1}$ with transition probability $(1-p)^{h(W,y)}M_q(h(W,y))$,
+generating a sequence of batches $\{y,2y,2^2y,...,W\}$, else the connection
+leaves the finite state machine with transition probability
+$(1-p)^jR_q(j)$ for $j\in[1,h(W,y)]$.  
+
+\paragraph*{Slow-Start with Loss:}
+If a loss occurs starting with $j^{th}$ packet sent in state $E$, then the
+successful number of rounds before facing packet loss is given as:
+
+\begin{equation} 
+     r =\biggl\lfloor\log_2\biggl(\frac{j-1}{y}+1\biggr)
+        \biggr\rfloor \nonumber
+\end{equation} 
+
+The number of packets in the round in which connection faces
+a loss can be expressed as:
+ \begin{equation}
+     i = j-1-y\times
+     \biggl(2^r-1\biggr) \nonumber 
+\end{equation} 
+Before the loss has been detected, 
+the window grows to size $w=min(W,2\times i)$. So the maximum
+number of packets that can be transferred to the network is:
+ \begin{equation} 
+       d =j-1+w \nonumber   
+ \end{equation} 
+
+The TCP connection makes a transition to state $L_x$ where $x=max(2,\lfloor
+(w/2)\rfloor)$ in CA phase with probability $(1-p)^{j-1}pM_q(d)$.
+
+\paragraph*{Congestion-Avoidance without Loss:}
+A connection in state $L_i$ generates  at most $i$ packets. If the
+remaining packets are more than $i$ when the connection is in state $L_i$,
+then a transition occurs to state $L_{i+1}$ with probability
+$(1-p)^iM_q(i)$, or else connection leaves the finite state machine with
+probability $(1-p)^jR_q(j)$, where $j\in[1,i]$.
+
+\paragraph*{Congestion-Avoidance with Loss:}
+Let a loss occur starting with $j^{th}$ packet sent in state $L_i$. If
+$x\leq i$ packets remain to be sent, the connection leaves with probability
+$(1-p)^{j-1}pR_q(x)$.  If $x \leq (k+j-1)$ where $k\in[1,j]$ packets remain
+to be sent, then connection leaves with probability $(1-p)^{j-1}pR_q(i+k)$.
+If $x \geq 2(j-1)$ packets remain to be sent, then connection makes a
+transition to state $L_t$, where $t=max(2,\lfloor (j-1)/2\rfloor)$ with
+probability $(1-p)^{j-1}pM_q(2(j-1))$.
+  	
+The transition probabilities and conditions are 
+	shown in table~\ref{table:t}.
+\begin{table}[t]
+ \centering
+ \caption{Transitions of the finite state machine} 
+  \resizebox{12cm}{!}{
+\begin{tabular}{|l|l|l|l|l|}
+   \multicolumn{5}{}{}\\
+   \hline  
+$s_i$ & $s_j$ & $P(s_i,s_j)$ & batches & condition \\  \hline 
+$L_i$ & $L_{i+1}$ & $(1-p)^iM_q(i)$  & $i$ & $2\leq i<W$  \\ \hline 
+$L_i$ & $-$ & $(1-p)^jR_q(j)$ & $j$ & $2\leq i \leq W \land 1 \leq j \leq i$ \\ \hline
+$L_i$ & $-$ & $(1-p)^{j-1}pR_q(k)$ & $k$ & $2\leq i \leq W \land 1\leq k \leq i \land 1\leq j \leq k$ \\ \hline 
+$L_i$ & $-$ & $(1-p)^{j-1}pR_q(i+k)$ & $i,k$ & $2\leq i \leq W  \land 1\leq j \leq i \land  1\leq k \leq j-1$ \\ \hline 
+$L_i$ & $L_t$ & $(1-p)^{j-1}pM_q(2(j-1))$ & $j-1,j-1$ & $2\leq i \leq W \land 1\leq j \leq i$ \\ \hline 
+$E$ & $L_{W+1}$  & $(1-p)^{h(W,y)}M_q(h(W,y))$ & $h(W,y)$ & $ $  \\ \hline 
+$E$ & $-$  & $(1-p)^jR_q(j)$ & $j$ & $1\leq j \leq h(W,y)$  \\ \hline 
+$E$ & $L_i$  & $(1-p)^{j-1}pM_q(d)$ & $d$ & $1\leq j \leq h(W,y)$ \\ \hline
+  \end{tabular}
+  \label{table:t}
+  }
+  \end{table}
+ 
+  Let $\Lambda ^e = \{\Lambda _{s_i}^{e}\}$ be a row vector that represents
+the external arrival rates to finite state machine (the only non null entry
+is $\Lambda _{E}^{e}=\chi$). $\Lambda ^t   = \{\Lambda _{s_i}^t\}$ be a row
+vector that represents the  total arrival rates to states and $P=
+\{P(s_i,s_j)\}$ is the transition probability matrix.  The flow balance
+equations can be $\Lambda ^t  = \Lambda ^e + \Lambda ^tP$ and from which,
+$\Lambda ^t = \Lambda ^e(I-P)^{-1}$. Let $B(s_i,s_j)$ be the set of
+batch-sizes produced by a connection moving from state $s_i$ to state
+$s_j$. The rate, $\lambda _b(X)$, at which batches of size $X$ are sent to
+the network can be represented as
+   \begin{equation}
+   	\lambda _b(X) = \sum_{s_i,s_j : X \in B(s_i,s_j)}\Lambda _{s_i}^tP(s_i,s_j) \nonumber
+   \end{equation}
+
+ The total sending rate of batches is denoted by $\lambda _t  =
+\sum_{X}\lambda _b(X)$.  Let the batch-size distribution be denoted by
+$g(X)$:
+ 
+\begin{equation}
+     g(X) = \frac{\lambda _b(X)}{\lambda _t } \nonumber
+ \end{equation} 
+ 
+Figures~\ref{fig:3-batch_distribution} and~\ref{fig:3-batch_distribution1}
+(split for clarity) represent the batch-size distributions for a given
+flow-size distribution based on different IW-sizes. Here the mean flow-size
+$\bar S$ is set to 20 packets, with unit flow arrival rate. Initial value
+for loss-event probability, $p=0.01$. The slow-start threshold is 100
+packets, BDP is 110 packets and IW values are 3, 8, 16, 32 and 64 packets
+for the TCP model. 
+
+
+\begin{figure}
+ %\subfigure[Retransmission Timeouts]{
+     \begin{minipage}{0.4\linewidth}
+          \centering
+          \resizebox{65mm}{!}{\includegraphics{batch_size_distribution1.pdf}}
+          \captionof{figure}{For IW-sizes of 3, 8 and 16 packets}
+         \label{fig:3-batch_distribution}
+     \end{minipage}
+   \qquad
+         % \hspace{0.1cm}
+           %\subfigure[Congestion Cuts]{
+     \begin{minipage}{0.5\linewidth}
+           \centering
+           \resizebox{65mm}{!}{\includegraphics{batch_size_distribution2.pdf}}
+           \captionof{figure}{For IW-sizes 3, 32 and 64 packets} 
+          \label{fig:3-batch_distribution1}
+     \end{minipage}
+   %\vspace{-0.5cm}
+  \end{figure}
+
+\subsection{Queueing Model}
+
+To study the burstiness of  TCP traffic, $M^{X}/M/1/B$ model can be used as
+a queueing model for the bottleneck router with finite buffer capacity,
+$B$~\cite{And01scalableconfiguration,Dirnopoulos2004}.  The arrival process
+follows Poisson process with batch arrival rate as $\lambda$ and service
+process follows Exponential time with mean service time $1/\mu$. The
+batch-size follows the distribution $g(X)$ as described above and has been
+truncated to get a finite batch-size whose maximum batch-size is $W_m$
+(maximum window size).  The traffic intensity can be expressed as,
+$\rho=E[X]\frac{\lambda}{\mu}$.  Fig.~\ref{fig:queue} shows the
+$M^{X}/M/1/B$ model.
+
+ \begin{figure}[H]
+	{\centering
+		\includegraphics[scale=0.50]{figures1/queue.pdf}
+		\caption{Queueing model}
+		\label{fig:queue}}
+\end{figure}
+
+The steady state equations can be written as,
+\begin{align}
+   	P_0\lambda = \mu P_1,  \nonumber
+   	\sum_{k=0}^{B}\Bigl(P_k\Bigr) &= 1, \nonumber \\
+   P_n\biggl(\mu+\sum_{j=1}^{min(B-n,Wm)}\lambda g(j)\biggr)&= \mu P_{n+1}
++\sum_{j=1}^{min(n,Wm)}\biggl(\lambda g(j)P_{n-j}\biggr) \nonumber 
+&\forall  1 \leq n < B
+\end{align} 
+
+ 	$\mu P_B = {\sum_{j=1}^{Wm}\biggl(\lambda g(j)P_{B-j}\biggr)}$ can be
+ 	derived using the above equations.
+ 
+\subsubsection*{Arrival Rate as a Function of Number of TCP Flows:}
+   
+We consider the case of homogeneous TCP sources.  Let $N$ be the number
+of TCP connections under consideration. TCP transmits a window of
+packets in each round. We assume that the connection never faces
+timeouts. The batch-arrival rate corresponding to a TCP is
+$\frac{1}{RTT}$. So the total batch-arrival rate due to  $N$ TCP
+connections is given by,
+ \begin{equation}
+     \lambda  = \frac{N}{RTT },
+ \end{equation} 
+From the above, we can write $\rho \propto E[X]$ for fixed number of
+active TCP connections.  Fig.~\ref{fig:3-batch} represents average batch-size
+for different IW with $N$ set to 10 TCP connections. It shows that the
+burstiness of TCP traffic increases with large IW. Also, the traffic intensity
+at the bottleneck router increases with large IW.       
+ 
+\subsection{Fixed Point Approximation}
+   
+   Fixed point approximation can be applied to solve jointly the TCP model,
+queueing model, and to find stable operating value for average packet-loss
+probability in a bottleneck router~\cite{Garetto2003}. Given an initial
+value of loss-event probability, batch-size distribution of packets is
+obtained. Batch-sizes are then fed into the queue to compute both
+loss-event probability and average packet-loss probability. Loss-event
+probability is circulated between TCP window dynamics model and queueing
+model till a stable operating value for average packet-loss probability is
+reached.  
+   
+   The TCP window dynamics mainly depends on loss-event probability rather
+than average packet-loss probability. The average packet-loss probability,
+$\bar p$, can be computed as,
+
+\begin{align}
+  \text{net arrival rate (with loss)} &= \text{net departure rate (with non-empty queue)}, \nonumber \\
+  E[X]\lambda(1-\bar p) &= \mu(1-P_0), \nonumber \\
+ \bar p &= 1-\frac{(1-P_0)}{\rho},
+\end{align} 
+Next, what we essentially need is the probability that a batch of size $i$
+can traverse the queue loss-free using $M^{X}/M/1/B$ model, and is given by
+$P_B(i)={\sum_{j=0}^{B-i}P_j}$. The loss-event probability $p$ can be
+obtained by equating the average probability that a batch of batch-size $i$
+can be generated by TCP model, and it can pass the queue loss-free:    
+   \begin{equation}
+      	\sum_{i=1}^{W_m}P\biggl(X=i\biggr)\biggl(1-p\biggr)^i =
+	      \sum_{i=1}^{W_m}P\biggl(X=i\biggr)P_B(i),
+   \end{equation} 
+Figures~\ref{fig:3-queue_length} and~\ref{fig:3-queue_length1} show the
+queue-length distribution for the batch-size distribution shown in
+Fig.~\ref{fig:3-batch_distribution} for different values of IWs. Buffer size
+is taken as 125 packets, and maximum window size, $W_m$, as 110 packets. The
+queue-length distribution decays slowly with IW-size of $3$. However, observe that the
+distribution shifts towards right with large IW-size, which is due to
+traffic intensity, larger than unity (arrival rate $>$ service rate). With
+IW-size of $8$, traffic intensity gets close to unity ($\rho = 1.09$) which
+shows uniformisation of queue-length (indifferent to queue-length). 
+
+\begin{figure}
+ %\subfigure[Retransmission Timeouts]{
+     \begin{minipage}{0.4\linewidth}
+          \centering
+          \resizebox{65mm}{!}{\includegraphics{queue_length_distribution1.pdf}}
+          \captionof{figure}{For IW-sizes of 3, 8 and 16 packets}
+         \label{fig:3-queue_length}
+     \end{minipage}
+   \qquad
+         % \hspace{0.1cm}
+           %\subfigure[Congestion Cuts]{
+     \begin{minipage}{0.5\linewidth}
+           \centering
+           \resizebox{65mm}{!}{\includegraphics{queue_length_distribution2.pdf}}
+           \captionof{figure}{For IW-sizes of 3, 32 and 64 packets} 
+          \label{fig:3-queue_length1}
+     \end{minipage}
+   %\vspace{-0.5cm}
+    %\label{fig:Queue}
+    %\caption{Queue-length distribution with $N=10$ TCP connections}
+  \end{figure}
+
+
+\begin{figure}[H]
+ %\subfigure[Retransmission Timeouts]{
+     \begin{minipage}{0.4\linewidth}
+          \centering
+          \resizebox{65mm}{!}{\includegraphics{batch.pdf}}
+          \captionof{figure}{Average batch-size}
+         \label{fig:3-batch}
+     \end{minipage}
+   \qquad
+         % \hspace{0.1cm}
+           %\subfigure[Congestion Cuts]{
+     \begin{minipage}{0.5\linewidth}
+           \centering
+           \resizebox{65mm}{!}{\includegraphics{packetloss.pdf}}
+           \captionof{figure}{Average packet-loss probability} 
+          \label{fig:3-loss}
+     \end{minipage}
+     %\label{fig:Batch-loss}
+	%\caption{Performance parameters with $N=10$ TCP connections}
+  \end{figure}     
+
+Fig.~\ref{fig:3-loss} represents the average packet-loss probability with
+different IW-size with $N$ set to $10$. It shows that average
+packet-loss probability increases with large IW. Large IW increases the
+burstiness of the TCP traffic which causes large number of packets to be
+dropped at the bottleneck router.  The average packet-loss probability
+will further increase with larger number of TCP flows. 
+
+\subsection{Calculation of Number of RTTs for TCP Flow}
+
+Next, we calculate the number of rounds for a flow during its connection
+life time. The Fig.~\ref{fig:path_enumerate} represents the problem of
+finding the expected number of rounds, that a flow faces loss in bottleneck
+router, derived from TCP window dynamics model. Each node corresponds to a
+state from the TCP model. Node 0 corresponds to state $E$, node 1
+represents $L_2$, node 2 represents $L_3$, and etc. Edge $e_{ij}$
+corresponds to the transition between states $i$ and $j$. $C[i,j]$
+represents the array of 2-tuples, where each tuple contains the number of
+packets transferred from state $i$ to state $j$ and the number of RTTs
+needed. $d_{0j}$ be the cost of path from node 0 to node j. Formally, we
+can write $d_{0k}= d_{0j} + C[j,k],$ \hspace{1pt} $\forall j>0$ where, k is
+the destination node. 
+
+Using the recursive function `ComputeRound' in Algorithm~\ref{algo:rtt}
+where $x$ is the remaining data-size of a flow that needs to be
+transferred; $N$ is the number of rounds completed for the portion of the
+flow, already transferred, and is set to $0$ initially; $i$ is the initial
+state i.e. state $E$; and $B$ is the array that conatains all possible
+number of rounds, one for each complete path, we can find the expected number of
+rounds, $L_r = \frac{\sum_{i}B_i}{len(B)}$ (assuming each path is equally
+probable). Let $E_r$ be the number of rounds that a flow may have during
+its life time.  Let $N_r$ be the number of rounds without packet loss
+assuming flow may finish with slow-start phase and is given by $N_r =
+\lceil\log_2(\frac{s}{y}+1)\rceil$, where, $y$ is the IW, $s$ is the
+flow-size.  Then, we can write $E_r$ as,
+
+   \begin{equation}\label{eq:rtt}
+      E_r = \bar p \times L_r + (1-\bar p)\times N_r 
+   \end{equation}
+%At $s$ equals to $d_{0k}(0)$, the number of RTTs that a flow takes can
+%be obtained by Eq.~\ref{eq:rtt}.
+
+\begin{figure}[H]
+	{\centering
+		\includegraphics[scale=0.4]{figures1/path_enumerating1.pdf}
+		\caption{Path enumerating graph}
+		\label{fig:path_enumerate}}
+\end{figure} 
+
+\begin{algorithm}
+  \caption{ComputeRound($C,x,N,i$)}
+  \label{algo:rtt}
+  \begin{algorithmic}[1]
+	\IF {$x=0$} 
+	\STATE append $N$ to $B$
+ \ELSIF {$x<$ number of packets that can be sent in last round}
+  \STATE append $N+1$ to $B$ 
+	\ELSE
+	\FOR {each adjacent node $j$}
+	\IF {$C[i,j](0)\not=0$ and $x-C[i,j](0) >= 0$}
+	\STATE ComputeRound($C, x-C[i,j](0)), N+C[i,j](1), j$)
+	\ENDIF
+	\ENDFOR
+	\ENDIF
+  \end{algorithmic}
+\end{algorithm}
+                        
+
+ Fig.~\ref{fig:3-loss_round} plots the number of RTTs against IW-size for
+different flow-sizes. Observe that, for flow-size 30 packets, minimum
+number of RTTs  is achieved with IW (and hence, the optimal IW) of 10
+(packets); however, for flow-size 70 packets, the number of RTTs increases
+with increasing IW. 
+
+ Here, any flow with flow-size less than or equal to $\theta$ packets, is
+considered to be a `small flow', and with size greater than $\theta$
+packets is considered to be `large flow'. Fig.~\ref{fig:3-rtt_s_l} plots
+response times for both small and large flows (in terms of RTTs) against
+IW-sizes, with $\theta$ set to $30$. Small flows show better response times
+with IW-size 10 or 16 packets while large flows with 8 or 10 packets.
+IW-size of 10 packets shows minimum number of RTTs for both small and large
+flows.
+
+\begin{figure}[H]
+ %\subfigure[Retransmission Timeouts]{
+     \begin{minipage}{0.4\linewidth}
+          \centering
+          \resizebox{65mm}{!}{\includegraphics{RTT.pdf}}
+          \captionof{figure}{For different flow-sizes}
+         \label{fig:3-loss_round}
+     \end{minipage}
+   \qquad
+         % \hspace{0.1cm}
+           %\subfigure[Congestion Cuts]{
+     \begin{minipage}{0.5\linewidth}
+           \centering
+           \resizebox{65mm}{!}{\includegraphics{RTT_s_l.pdf}}
+           \captionof{figure}{For both small and large flows} 
+          \label{fig:3-rtt_s_l}
+     \end{minipage}
+     %\label{fig:RTT-model}
+	%\caption{Number of RTTs with $N=10$ TCP connections}
+  \end{figure}  
+
+\subsection{Discussions}
+  We developed an {\em integrated packet-flow} model to study the effects
+of IW on burstiness of TCP traffic, queue-length distribution, network
+stability in terms of average packet-loss probability, and response time of
+a TCP flow. The expected batch-size ({\em cwnd}) obtained from batch-size
+distribution, increases with increasing IW; and hence, the burstiness of
+the TCP traffic. We derived the average packet-loss probability for finite
+number of homogeneous TCP sources, and the expected number of RTTs for a
+TCP flow as a function of IW-size. The number of RTTs that a flow needs,
+depends on average packet-loss probability and flow-size. The IW-size for
+which a flow achieves minimum number of RTTs, is considered as optimal. We
+found that the optimal choice of IW-size depends on a number of network
+parameters such as bottleneck router's buffer-size, number of active TCP
+connections, bottleneck router's link-capacity, RTT and flow-size.  This
+motivates us to use IW as a function; furthermore, the IW for a new TCP
+connection can be a function of parameters at the end-host (flow-size),
+obtained from the network, or obtained from both network and end-host.
+
+%\end{comment}
+\section{Conclusions}
+\label{sec:conclusions}
+
+  In this work, we studied the affects of different values of IW-size on the
+performance of flows, in particular small flows. Our performance evaluation
+compared and studied various important metrics. The analysis using {\em
+integrated packet-flow model} showed that with increasing IW, burstiness of
+TCP traffic increases (we know that bursty traffic degrades the network
+performance drastically). We also observed from analytical results that
+with increasing IW, average packet-loss probability increases at the
+bottleneck router (thus, causes large packets-drop, and hence, affects the
+response times). The limitation of this model is that, it does not consider
+timeouts in the window dynamics. We found that the optimal value of IW-size
+depends on a number of network parameters such as bottleneck router's
+buffer-size, number of active TCP connections, bottleneck router's
+link-capacity, RTT and flow-size. We observed the non-monotonous behaviour
+of the number of RTTs (response time) for both small and large flows using
+the model.  The results, we obtained through analytical techniques, are
+similar to the results obtained by the Google team on large-scale Internet
+experiments. In the sense, through large-scale Internet experiments, the
+Google team quantified the response time using a large IW (however, it is a
+fixed value, 10 segments), that is a function of network bandwidth, RTT,
+BDP, and nature of applications. 
+
+
+From the simulation results, we also observed that large IW-size has a
+negligible effect on the response times of large flows, and no single value
+of IW-size is seen to improve the performance, when compared using the
+performance metrics. We then demonstrated that a simple flow-size based
+function for choosing an IW-size improved the response time of small TCP
+flows, thereby meeting the intension behind increasing the IW-size. Hence,
+we recommend IW to be a function of the flow-size instead of being set to a
+single value for all flows. Through extensive simulations, we showed that
+such a flow-size based function not only improves the response times of
+small flows, but also showed a significant improvent in response times for
+medium-size flows.  Though we came up with an arbitrary (but simple)
+function in this paper to show the usefulness of an IW-size function, in
+future, we plan to work more on the analytical model to find the existence
+of a size-based function for IW that will improve flow-level based
+performance metrics as discussed in this paper.  

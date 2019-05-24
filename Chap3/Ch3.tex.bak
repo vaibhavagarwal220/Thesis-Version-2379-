@@ -1,0 +1,417 @@
+\clearpage
+\thispagestyle{empty}
+~\clearpage
+%\graphicspath{{Figures_chapter-3/}}
+%\chapter{A class of finite difference schemes for circular interface problems with an HOC approach}
+\chapter{CDAC design and implementation}
+\label{chap3_CDAC}
+\section{The Digital-to-Analog converter}
+The DAC operates with the digital inputs from the SAR block and produces an analog voltage. The DAC output is compared with the sampled input to generate appropriate bit. The DACs can be catagorized as serial and parallel. Parallel DACs are of much interest to us as these are high speed DACs. The parallel DACs can be classified into 3 major catagories\cite{19}:
+\begin{enumerate}
+	\item \textbf{Current scaling DAC:}
+	The current scaling DACs convert the reference voltage into a set of binary weighted currents. Some of these currents are selected by the digital input and these  currents are, generally, given to the inverting terminal of an operational amplifier (OP-AMP). These currents are summed up to generate the analog output. It is shown in \ref{fig:CSD}. 
+	\begin{figure}[!htb]
+		\centering
+		\includegraphics[width=\columnwidth]{Volt.eps}
+		\caption{A current scaling DAC.}\label{fig:CSD}
+	\end{figure}  
+	
+	\item \textbf{Voltage scaling DAC:}
+	The voltage scaling DACs convert the reference voltage into 2$^N$ binary weighted voltages. One out of these generated levels is selected based on the digital input word. It is shown in Figure \ref{fig:VSD}.
+	\begin{figure}[!htb]
+		\centering
+		\includegraphics[width=\columnwidth]{curr.eps}
+		\caption{A voltage scaling DAC.}\label{fig:VSD}
+	\end{figure}  
+	
+	\item \textbf{charge scaling DAC:}
+	The charge scaling DACs use capacitor banks to binarily divide the charge according to the given digital input. These DACs do not need any OP-AMP or selection logic to give the output. It is shown in Figure \ref{fig:ChSD}
+	\begin{figure}[!htb]
+		\centering
+		\includegraphics[width=0.7\columnwidth]{charge.eps}
+		\caption{A charge scaling DAC.}\label{fig:ChSD}
+	\end{figure}   
+\end{enumerate} 
+
+The charge scaling DACs (CDAC) can take samples in the capacitor array itself. It makes them an attractive candidate for SAR ADCs.
+
+The DAC plays very important role in the working of SAR ADC. The linearity and speed of the SAR ADC depends on the linearity and settling time of the DAC\cite{20}. The charge scaling DAC employs binary weighted array of capacitors as shown in Figure \ref{fig:3bit}.
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.7\columnwidth]{cdac.eps}
+	\caption{An example of a 3-bit Charge Scaling DAC.}\label{fig:3bit}
+\end{figure}	
+
+The switches need to be switched between ground potential and $V_{REF}$ voltage, according to the bits. The switching takes up energy and makes the DAC one of the most power hungry sub-blocks in the SAR ADC.
+In literature~\cite{27,6,28}, many switching schemes are proposed to lower the power consumption.
+
+In the \emph{conventional switching scheme}~\cite{27}, after sampling, the MSB capacitor of the array is switched to $V_{REF}$. Then the comparision is made and the capacitor is either switched to ground (if comparator output is 0) or to $V_{REF}$ (if comparator output is 1). The switching from ground potential to $V_{REF}$ voltage is known as an ``up transition" and switching from $V_{REF}$ to ground is known as a ``down transition". The conventional switching procedure is shown in Figure~\ref{fig:conv}.    
+\begin{figure}[htbp]
+	\centering
+	\subfigure[]{\includegraphics[width=0.9\columnwidth]{conva.eps}}
+	\subfigure[]{\includegraphics[width=0.49\columnwidth]{convb.eps}}
+	\subfigure[]{\includegraphics[width=0.49\columnwidth]{convc.eps}}
+	\subfigure[]{\includegraphics[width=0.49\columnwidth]{convd.eps}}
+	\subfigure[]{\includegraphics[width=0.49\columnwidth]{conve.eps}}
+	\subfigure[]{\includegraphics[width=0.49\columnwidth]{convf.eps}}
+	\subfigure[]{\includegraphics[width=0.49\columnwidth]{convg.eps}}
+	\caption{The conventional switching procedure for a CDAC in a 2 bit SAR ADC \cite{27}.If comparision output of (a) is true then go to (b), otherwise go to (c). If output of (b)/(c) is true then go to (d)/(f), else go to (e)/(g)}
+	\label{fig:conv}
+\end{figure}	
+
+The conventional switching scheme is very simple to implement; however, it consumes large switching energy. During the down transitions, one capacitor has to be disconnected from $V_{REF}$ voltage to ground potential and another has to be connected from ground potential to $V_{REF}$ voltage. 
+
+In the \emph{2-step switching procedure}~\cite{6}, the up transition is same as in Figure~\ref{fig:conv}. However, during down transition, the (MSB)$^{th}$ capacitor is switched to ground in two steps. First, from time t to t+(T$_s$/2) both (MSB)$^{th}$ and (MSB-1)$^{th}$ capacitors are connected to $V_{REF}$ voltage, i.e (MSB-1)$^{th}$ capacitor is connected to $V_{REF}$ voltage. Then, at t+(T$_s$/2), the MSB capacitor is connected to ground. This facilitates charge sharing between (MSB)$^{th}$ capacitor and (MSB-1)$^{th}$ capacitor. Hence, $V_{REF}$ voltage has to supply less charge, resulting in energy savings.  
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{2step.eps}
+	\caption{2 step switching during down transition \cite{6}.}
+	\label{fig:2step}
+\end{figure}
+However, this approach complicates the switching logic and SAR block in terms of more number of switches and time budget.
+
+The \emph{Charge Sharing approach}~\cite{6} takes the two step switching scheme even further and incorporates a switch between the capacitors. During the down conversion, the (MSB)$^{th}$ capacitor is disconnected from $V_{REF}$ and switch connecting (MSB)$^{th}$ and (MSB-1)$^{th}$ capacitors is turned on. After the charge from (MSB)$^{th}$ capacitor is shared, it is connected to ground potential and (MSB-1)$^{th}$ capacitor is connected to $V_{REF}$ voltage. The supply has to provide less charge to (MSB-1)$^{th}$ capacitor, which leads to lesser power consumption.
+On the downside ,this method adds extra switches and again complicates the digital logic in terms of switching transient and the required logical effort.
+
+In charge sharing method, the (MSB-1)$^{th}$ capacitor still has to charge to $V_{REF}$. The \emph{Capacitor Splitting Scheme}~\cite{6}, splits the MSB capacitor into two capacitors of value (MSB-1) to remove this charging also. During a down transition, it simply grounds one of the (MSB-1) capacitors, thereby saving almost all of the switching energy.
+However, this method doubles the number of switches in the DAC. The digital circuitary, which is controlling the switches need an extra attention for digital logic and switching circuit design.
+
+The \emph{MCS (Merged Capacitor Switching)}~\cite{28} scheme eliminates the MSB capacitor switching (as done in the conventional switching scheme) by simply sampling the input on the top plates of the capacitors. Also, this method introduces three level switching, i.e., the capacitors are switched to $V_{REF}$, $V_{CM}$ and ground potential respectively unlike the conventional method. The three level switching removes the MSB capacitor from the array, thereby it reduces the capacitance of the array by half. The scheme is elaborated in Figure~\ref{fig:MCS}.
+\begin{figure}[!h]
+	\centering
+	\subfigure[]{\includegraphics[width=0.9\columnwidth]{MCSa.eps}}
+	\subfigure[]{\includegraphics[width=0.49\columnwidth]{MCSb.eps}}
+	\subfigure[]{\includegraphics[width=0.49\columnwidth]{MCSc.eps}}
+	\subfigure[]{\includegraphics[width=0.49\columnwidth]{MCSd.eps}}
+	\subfigure[]{\includegraphics[width=0.49\columnwidth]{MCSe.eps}}
+	\subfigure[]{\includegraphics[width=0.49\columnwidth]{MCSf.eps}}
+	\subfigure[]{\includegraphics[width=0.49\columnwidth]{MCSg.eps}}
+	
+	\caption{Merged capacitor switching procedure for DAC in a 2-bit SAR ADC~\cite{28}. If comparision output of (a) is true then go to (b), otherwise go to (c). If output of (b)/(c) is true then go to (d)/(f), else go to (e)/(g)}
+	\label{fig:MCS}
+\end{figure}	    
+MCS method is energy efficient as well, because the switching is either from $V_{CM}$ to $V_{REF}$ or from $V_{CM}$ to ground potential.
+
+Apart from binary DACs, there are several non-binary DACs available in literature \cite{29}. These DACs does not use the regular binary weighted capacitor array, but use the several capacitors of same value. Such a DAC is presented in \cite{29}.
+The proposed DAC is thermometric, and uses specific bit patterns to generate appropriate levels.
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{thermo.eps}
+	\caption{6-bit thermometric DAC \cite{29}.}
+	\label{fig:thermo}
+\end{figure}
+
+Here, first the C capacitors are switched with patterns 000, 100, 110, and 111 while all other capacitors being switched to zero. This gives rise to voltage levels $0,~1/64 \times V_{REF},~2/64 \times V_{REF},~3/64 \times V_{REF},~and~4/64 \times V_{REF}$. The same bit pattern then repeats for 4C capacitors and 16C capacitors. The combination of the switched capacitors give rise to 64 levels.
+However, these DACs use large switching energy than binary DACs.
+
+\subsection{The switch design}
+\hspace{4em} The switches in CMOS technology are implemented by using nMOS or pMOS transistors. By operating these transistors in linear and cut-off modes, desired switching characteristics can be obtained.
+
+The nMOS switch passes a ``strong" zero, i.e., when the source of nMOS is connected to ground and the gate is connected to $V_{DD}$, its drain goes to ground. However; when the source of the nMOS is connected to a voltage near $V_{DD}$, $V_{GS}$ goes below the threshold voltage of nMOS transistor, hence turning it off. Therefore, we say the nMOS passes a ``weak" one. The pMOS switch passes a ``strong" one and a ``weak" zero by the same logic. Whenever, we have an input signal which can vary between zero and $V_{DD}$, we can not use either nMOS or pMOS switch.
+
+\subsubsection{The transmission gate switch}
+\hspace{4em} If source and drain of nMOS and pMOS are connected together, we get a transmission gate switch, as shown in Figure \ref{TGS}. The gates of nMOS and pMOS are driven by out of phase clocks. This gate can pass digital logic `0' as well as digital logic `1' ,ideally, without any reduction in voltage levels. 
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.4\columnwidth]{TGS.eps}
+	\caption{A transmission gate switch.}
+	\label{TGS}
+\end{figure}
+However, the on resistance of a MOS transistor is signal dependent\cite{19}. The signal dependent resistance `R$_{ON}$' can be written as:
+\begin{equation}
+R_{ON} = \frac{L}{\mu C_{ox}W((V_{GS}-\vert V_{th}\vert)V_{DS})-\frac{1}{2}V_{DS}^2}.
+\end{equation}
+where, L is the length of the transistor,\\ 
+W is the width of the transistor,\\
+$\mu$ is the mobility ($\mu_{n}$ is the electron mobility and $\mu_{p}$ is the hole mobility),\\
+$C_{ox}$ is the capacitance per unit area of the gate oxide,\\
+$V_{GS}$ is the gate source voltage of the transistor,\\
+$V_{th}$ is the the threshold voltage of the transistor ($V_{th_p}$ is the threshold voltage of pMOS transistor and $V_{th_n}$ is the threshold voltage of the nMOS transistor), and\\
+$V_{DS}$ is the drain source voltage of the transistor.\\
+
+The input is applied to the source of the transistor, so $V_{GS}~=~V_G-V_S$ changes with the input. This change gives a variable resistance for various input ranges. This can lead to a distorted output. The bootstrapped switch is used to alleviate this problem.
+
+\subsubsection{The bootstrapped switch}
+\hspace{4em} Figure \ref{BSS} shows the bootstrapped switching scheme. The bootstrapped switch makes the $V_{GS}$ constant by adding the input voltage to gate voltage of the nMOS transistor (M$_1$).
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{BSS.eps}
+	\caption{The schematic of the bootstrapped switchin scheme\cite{30,31}.}
+	\label{BSS}
+\end{figure}
+When the sampling clock (CLK) is low, the capacitor C$_B$ is charged to $V_{DD}$ through transistors M$_3$ and M$_4$. The circuit is in the hold mode at this time. Also, the charge at the gate of M$_1$ is connected to ground potential through M$_6$ and M$_7$. As, the sampling clock goes high, M$_5$ and M$_2$ turn ON and we get $V_{IN}+V_{DD}$ at the gate of transistor M$_1$. 
+
+Whenever linearity of switch is very important, bootstrapped switch is used. However, this switch consumes more power and takes more area than a transmission gate switch. 
+
+\section{Implementation}
+\subsection{Thermometric code CDAC}
+The proposed flash-SAR hybrid ADC architecture uses seven CDACs. Every CDAC generates different reference voltage level. The refernce analog voltage level generated by the CDAC is compared with the sampled input voltage. Any non linearity in the operation of the DAC will affect the complete performance of the ADC. Figure~\ref{cdac} shows the implemented CDAC.
+ 
+ \begin{figure}[httb]
+ 	\begin{center}
+ 		\includegraphics[width=\columnwidth]{DAC1.eps}
+ 		\caption{Schematic of the charge redistribution DAC(CDAC).}
+ 		\label{cdac}
+ 	\end{center}
+ \end{figure} 
+ 
+ During the sampling phase, bottom plates of all the capacitors are connected to the input voltage ($V_{IN}$), while the top plates are connected to the common mode voltage ($V_{CM}$). This results in a voltage of $V_{CM}-V_{IN}$ at the node X.
+ 
+ After the sampling, conversion starts. For first conversion cycle seven equally spaced (by 112.5~mV) reference voltage levels are generated using different bit patterns for 8C capacitors, as shown in Table~\ref{pattern}. All other capacitors are at ground potential during this cycle. 
+ 
+ \begin{table}[httb]
+ 	\centering
+ 	\caption{Bit pattern applied and reference voltages generated by the thermometric CDACs in first conversion cycle.}
+ 	\begin{tabular}{|c|c|c|}
+ 		\hline
+ 		CDAC & Bit pattern & Reference voltage level generated \\
+ 		(number) & (given to 8C capacitors) & (mV)\\
+ 		\hline
+ 		\hline
+ 		1 & 1111111 & 787.5\\
+ 		\hline
+ 		2 & 1111110 & 675\\
+ 		\hline
+ 		3 & 1111100 & 562.5\\
+ 		\hline
+ 		4 & 1111000 & 450\\
+ 		\hline
+ 		5 & 1110000 & 337.5\\
+ 		\hline
+ 		6 & 1100000 & 225\\
+ 		\hline
+ 		7 & 1000000 & 112.5\\
+ 		\hline 
+ 	\end{tabular}
+ 	\label{pattern}
+ \end{table}
+ 
+ In the second cycle, 8C capacitors are given the bit pattern generated according to the outputs of the comparators for first cycle. The seven C capacitors are fed the same bit pattern as shown in Table~\ref{pattern1}. Note that the reference levels generated in this cycle are seperated by 14.06~mV. The reference levels generated in this cycle are spaced by 1.76~mV (1~LSB).
+ \begin{table}[httb]
+ 	\centering
+ 	\caption{Bit pattern applied to C capacitors and reference voltages generated by the thermometric CDACs in second conversion cycle, when comparator output for first cycle was 1111000.}
+ 	\begin{tabular}{|c|c|c|}
+ 		\hline
+ 		CDAC & Bit pattern & Reference voltage level generated \\
+ 		(number) & (given to C capacitors) & (mV)\\
+ 		\hline
+ 		\hline
+ 		1 & 1111111 & 548.44\\
+ 		\hline
+ 		2 & 1111110 & 534.38\\
+ 		\hline
+ 		3 & 1111100 & 520.31\\
+ 		\hline
+ 		4 & 1111000 & 506.25\\
+ 		\hline
+ 		5 & 1110000 & 492.19\\
+ 		\hline
+ 		6 & 1100000 & 478.13\\
+ 		\hline
+ 		7 & 1000000 & 464.06\\
+ 		\hline 
+ 	\end{tabular}
+ 	
+ 	\label{pattern1}
+ \end{table}
+ 
+ 
+ \begin{table}[httb]
+ 	\centering
+ 	\caption{Bit pattern applied to C capacitors and reference voltages generated by the thermometric CDACs in third conversion cycle, when comparator output for second cycle was 1111111.}
+ 	\begin{tabular}{|c|c|c|}
+ 		\hline
+ 		CDAC & Bit pattern & Reference voltage level generated \\
+ 		(number) & (given to C capacitors) & (mV)\\
+ 		\hline
+ 		\hline
+ 		1 & 1111111 & 560.74\\
+ 		\hline
+ 		2 & 1111110 & 558.98\\
+ 		\hline
+ 		3 & 1111100 & 557.23\\
+ 		\hline
+ 		4 & 1111000 & 555.47\\
+ 		\hline
+ 		5 & 1110000 & 553.71\\
+ 		\hline
+ 		6 & 1100000 & 551.95\\
+ 		\hline
+ 		7 & 1000000 & 550.20\\
+ 		\hline 
+ 	\end{tabular}
+ 	
+ 	\label{pattern2}
+ \end{table}
+ 
+ \subsection{Binary weighted CDAC}
+ The thermometric code CDAC consumes large power due to more number of capacitors and more switching activity. A good alternative to a thermometric code CDAC is binary weighted CDAC. Figure~\ref{binary} shows the implemented binary weighted CDAC.
+ \begin{figure}[httb]
+ 	\begin{center}
+ 		\includegraphics[width = \columnwidth]{binary.eps}
+ 		\caption{Schematic of the binary weighted CDAC.}
+ 		\label{binary}
+ 	\end{center}
+ \end{figure} 
+ 
+ During the sampling phase, bottom plates of all the capacitors are connected to the input voltage ($V_{IN}$), while the top plates are connected to the common mode voltage ($V_{CM}$). This results in a voltage of $V_{CM}-V_{IN}$ at the node X.
+ 
+ After the sampling, conversion starts. For first conversion cycle seven equally spaced (by 112.5~mV) reference voltage levels are generated using different bit patterns, as shown in Table~\ref{patternb}. All other capacitors are at ground potential during this cycle.  
+ \begin{table}[httb]
+ 	\centering
+ 	\caption{Bit pattern applied to 32C, 16C, and 8C capacitors and reference voltages generated by the binary weighted CDACs in first conversion cycle.}
+ 	\begin{tabular}{|c|c|c|}
+ 		\hline
+ 		CDAC & Bit pattern, capacitors are in order: & Reference voltage level generated \\
+ 		(number) & \small{(32C 16C 8C 4C 2C C C)} & (mV)\\
+ 		\hline
+ 		\hline
+ 		1 & 1110000 & 787.5\\
+ 		\hline
+ 		2 & 1100000 & 675\\
+ 		\hline
+ 		3 & 1010000 & 562.5\\
+ 		\hline
+ 		4 & 1000000 & 450\\
+ 		\hline
+ 		5 & 0110000 & 337.5\\
+ 		\hline
+ 		6 & 0100000 & 225\\
+ 		\hline
+ 		7 & 0010000 & 112.5\\
+ 		\hline 
+ 	\end{tabular}
+ 	\label{patternb}
+ \end{table}
+ In the second cycle, the capacitors 32C, 16C, and 8C are given the bit pattern generated according to the outputs of the comparators for first cycle. Table~\ref{patternb1} shows the bit patterns given to the capacitors 4C, 2C and C in second cycle and corresponding voltage levels generated for comparision. Note that the reference levels generated in this cycle are seperated by 14.06~mV~(1~LSB).
+ 
+ \begin{table}[httb]
+ 	\centering
+ 	\caption{Bit pattern applied to 4C, 2C, and C capacitors and reference voltages generated by the binary weighted CDACs in second conversion cycle, when comparator output for first cycle was 1111000; i.e.output bits were 100.}
+ 	\begin{tabular}{|c|c|c|}
+ 		\hline
+ 		CDAC & Bit pattern, capacitors are in order: & Reference voltage level generated \\
+ 		(number) & \small{(32C 16C 8C 4C 2C C C)} & (mV)\\
+ 		\hline
+ 		\hline
+ 		1 & 1001110 & 548.44\\
+ 		\hline
+ 		2 & 1001100 & 534.38\\
+ 		\hline
+ 		3 & 1001010 & 520.31\\
+ 		\hline
+ 		4 & 1001000 & 506.25\\
+ 		\hline
+ 		5 & 1000110 & 492.19\\
+ 		\hline
+ 		6 & 1000100 & 478.13\\
+ 		\hline
+ 		7 & 1000010 & 464.06\\
+ 		\hline 
+ 	\end{tabular}
+ 	
+ 	\label{patternb1}
+ \end{table}
+ 
+ Selection of unit capacitor C is done such that the root mean square value of the thermal noise due to capacitors is less than 0.5LSB as illustrated in Equation~\ref{thermal}\cite{20}. This is necessary to do otherwise thermal noise will dominate quantization noise, and DAC will not generate analog voltage corresponding all the codes (there will be missing codes). 
+ \begin{equation}
+ \sqrt{\frac{kT}{C}}\leq\frac{LSB}{2}
+ \label{thermal}
+ \end{equation}
+ where k is the Boltzmann constant with value $1.38\times10^{-23}~m^2kgs^{-2}K^{-1}$,\\
+ T is the absolute temperature in Kelvins,\\
+ and LSB is given by $\frac{V_{REF}}{2^N}$.
+ 
+ \subsection{Segmented Split Capacitor array CDAC}
+ As the number of bits increases, the DAC capacitance size increases. The settling time constant of the DAC should be sufficiently low so that the reference levels are ready for comparison. This implies that the resistance associated with the switches should be low with wider switches. Also, the capacitance spread is more for high resolution designs. Hence, binary-weighted CDAC is not preferred for high resolutions. In order to optimize area and DAC settling time, a split capacitor array is combined with the segmented CDAC architecture. It reduces the capacitor size in the segmented MSB array by 87~\%. The segmented split-capacitor array CDAC is shown in Fig.~\ref{sseg}. 
+ \begin{figure}[!htb]
+ 	\begin{center}
+ 		\includegraphics[width = \columnwidth]{sseg}
+ 		\caption{The schematic diagram of a segmented split-capacitor array CDAC.}
+ 		\label{sseg}
+ 	\end{center}
+ \end{figure}
+ 
+ This architectures can further be improved for higher number of bits without affecting performance. Further, the MSB portion of the split capacitor CDAC is segmented, rather than binary. In a flash-SAR hybrid ADC, the comparators' output is in a thermometric fashion. The thermometric code is directly fed to the DAC. It eliminates the need for a thermometric-to-binary~(T-to-B) code converter in the loop and hence reduces the loop delay. 
+ 
+ \begin{table}[!htb]
+ 	\begin{center}
+ 		\caption{Bit patterns generated by the digital block for all 7 CDACs in first and second comparison cycle.}
+ 		\begin{tabular}{c|c|c}
+ 			\hline
+ 			CDACs & $1^\text{st}$ cycle & $2^\text{nd}$ cycle$^{**}$\\
+ 			\hline
+ 			1 & 1111111000 & XXXXXXX111\\
+ 			2 & 0111111000 & XXXXXXX110\\
+ 			3 & 0011111000 & XXXXXXX101\\
+ 			4 & 0001111000 & XXXXXXX100\\
+ 			5 & 0000111000 & XXXXXXX011\\
+ 			6 & 0000011000 & XXXXXXX010\\
+ 			7 & 0000001000 & XXXXXXX001\\
+ 			\hline
+ 		\end{tabular}
+ 	\end{center}
+ 	\hspace{2.65cm}$^{**}$X is the bit being fed back from the comparator output.
+ 	\label{pattern3}
+ \end{table}
+ 
+ In the first cycle all capacitors are charged with input voltage $\text{V}_\text{IN}$. In the first comparison cycle, 3 most significant bit~(MSB) capacitors are fed with the patterns from the SAR logic according to Table~\ref{pattern3}. In the next cycle, these patterns are replaced by the feedback from the SAR logic. This feedback is decided by the comparator outputs. Since there are 7 comparators, one can use a segmented DAC for the 3 MSBs. This eliminates the need of a T-to-B converter in the loop. Hence, it improves the overall speed of ADC.
+ 
+ The design also uses 7 CDACs. All of the CDACs generate different, but evenly spaced voltage levels. To generate these levels SAR logic provides each DAC with different bit-patterns. The reference levels in the first cycle are 112.5~mV apart i.e. 3-bit resolution. In the second cycle, the reference levels are 14.06~mV apart i.e. 6-bit resolution. Unit capacitor size for the CDAC is 8.66~fF, designed with considering kT/C noise.
+ 
+ The segmented split-capacitor CDAC is used in the design of the ADC. The designed segmented CDAC is shown in Figure~\ref{segcdac}.
+ \begin{figure}[!htb]
+ 	\centering
+ 	\includegraphics[width = \columnwidth]{segcdac}
+ 	\caption{The designed segemented CDAC.}
+ 	\label{segcdac}
+ \end{figure}
+ 
+ Table~\ref{sizing} shows the size of switches (Width, length and multiplier) for the designed CDAC.
+ 
+ \begin{table}[httb]
+ 	\centering
+ 	\caption{Sizing of switches for segmented split-capacitor array CDAC. Naming scheme of switches can be seen from Figure~\ref{segcdac}.}
+ 	\begin{tabular}{c|c|c}
+ 		\hline
+ 		Switch & Size & Multiplier\\
+ 		& ($\frac{W~nm}{L~nm}$) & m\\
+ 		\hline
+ 		\hline
+  		S$_T$ & (1000/30)$_{nMOS}$, (1700/30)$_{pMOS}$ & 1$_{nMOS}$, 1$_{pMOS}$\\
+ 		S$_{D4}$ & (1000/30)$_{nMOS}$, (1700/30)$_{pMOS}$ & 4$_{nMOS}$, 4$_{pMOS}$\\ 
+ 		S$_{D2}$ & (1000/30)$_{nMOS}$, (1700/30)$_{pMOS}$ & 2$_{nMOS}$, 2$_{pMOS}$\\
+ 		S$_{D1}$ & (1000/30)$_{nMOS}$, (1700/30)$_{pMOS}$ & 1$_{nMOS}$, 1$_{pMOS}$\\
+ 		S$_{VCM}$ & (1000/30)$_{nMOS}$, (1700/30)$_{pMOS}$ & 8$_{nMOS}$, 8$_{pMOS}$\\
+ 		\hline 
+ 	\end{tabular}
+ 	\label{sizing}	
+ \end{table} 
+ 
+The input-output characteristic of the designed CDAC is shown in Figure~\ref{dac_io}. The CDAC shows an offset error of 0.51~LSB and a gain error of 0.2~LSB. The gain and offset errors are due to the capacitance introduced by the bottom plate parasitic of bridge capacitor and the capacitance introduced by switch $S_{VCM}$. The voltage division among the capacitors is not accurate because of these two capacitances. The CDAC shows all 64 levels of the code.
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width = \columnwidth]{dacio}
+	\caption{The input-output characteristics of the designed CDAC.}
+	\label{dac_io}
+\end{figure} 
+
+The static characteristics of the CDAC is shown in Figure~\ref{inldnldac}. The CDAC shows an INL of -0.75/0.4~LSB and DNL of +0.72/-0.72~LSB. 
+\begin{figure}[!htb]
+	\centering
+	\subfigure[]{\includegraphics[width = \columnwidth]{dacinl}}
+	\subfigure[]{\includegraphics[width = \columnwidth]{dnldac}}
+	\caption{(a) INL and (b) DNL plots of the designed CDAC.}
+	\label{inldnldac}
+\end{figure}
+
+\subsection{Switch}  
+Both bootstrapped and transmission gate switches were designed. Comparing both designs bootstapped switch shows better performance in terms of tracking the signal. However, it consumes more power, $82.49~\mu W$ as compared to $89.03~nW$, than transmission gate. Hence, transmission gate switch is considered in the final design. 
+%\pagenumbering{arabic}
+
+%\noindent \hglue 60mm {\em Education is an ornament in prosperity  \\
+% \hglue 60mm and a refuge in adversity.}
+%\begin{flushright}
+%--- Aristotle
+%\end{flushright}
+\clearpage 

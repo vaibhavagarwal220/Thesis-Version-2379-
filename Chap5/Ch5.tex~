@@ -1,0 +1,963 @@
+\newcommand{\shellcmd}[1]{\indent\indent\texttt{\footnotesize\$ #1}}
+\newcommand{\code}[1]{\indent\indent\texttt{\footnotesize #1}}
+\chapter{Development and Experimentation of TCP Initial Window Function}
+\label{chap:dev-exp-iw}
+
+\section{Introduction}
+     
+      The most widely used transport protocol that carries nearly 90\% of
+the Internet traffic volume has become a subject of an active research in
+the networking research community over the past two decades~\cite{qoe-08}.
+The performance of the Internet traffic carried by TCP, and its behavior,
+have been extensively studied under various network conditions. However,
+its behavior affects the flows, whose sizes are very small compared to the
+bandwidth-delay product of the network. In the context of  {\em
+mice-elephant} phenomenon---80\% of flows with small sizes (small flows) in
+number contribute to only 20\% of traffic in volume, and the remaining 20\%
+flows that are large in sizes, called elephant flows, contribute to 80\%
+of traffic volume---of TCP traffic, TCP shows unfairness against small
+flows (termed as mice flows). Generally users expect very short response
+times for mice flows such as HTTP queries, web searches, tweets, Facebook
+updates, etc.  However, a packet loss to these flows during slow-start
+phase is mostly recovered by retransmission by time-out rather than fast
+retransmit; and time-outs to these flows increase the response times many
+folds. Hence, for improving the response times of small flows, there has
+been proposals either for changing the slow-start algorithm itself, or for
+entering to congestion avoidance phase by avoiding the slow-start penalty.
+But our focus in this context is on the initial window (IW) size.
+%  The
+%IW-size influences response times of flows, as a larger value can lead to
+%lesser time, in number of rounds, to converge to the right
+%congestion-window size.  Hence, we find it motivating to study the
+%response times of small flows in the context of TCP's IW-size.  
+For more than a decade now, the upper bound for the value of IW-size is
+`min (4*MSS, max (2*MSS, 4380 bytes))' which corresponds to three times the
+maximum segment size (MSS) in Ethernet LANs.
+
+ 
+%T/TCP
+%does not support multicasting. Many researchers have implemented and tested
+%T/TCP protocol inside kernel of various operating systems like, FreeBSD,
+%Linux, SunOS and BSD/OS~\cite{markStacey}. The implementation of it was
+%made available first in the SunOS~4.1.3 operating system, and then in
+%FreeBSD~2.0. Authors of~\cite{markStacey} implemented T/TCP for Linux, and
+%evaluated the performance of it against standard TCP.
+ % Authors of~\cite{b-tcp} implemented and tested in ns-2 to study the
+%effects of B-TCP for small flows competing with large flows; and the
+%protocol implementation needs modification to TCP at the sender side only.
+
+
+
+\begin{comment}
+We made an important assumption that, flows will be able to know their
+sizes before the transfer begins. While this is true for many applications,
+for example, an HTTP query, a file transfer etc., there are also
+applications for which the flow-sizes can not be known in advance, for
+example, a streaming video. We assume the flows whose sizes can not be
+known in advance are usually large flows, and hence, the IW-size of such
+flows can be set to $IW_{\min}$. Besides, we view this function as an
+incentive for small flows (basically the applications generating small
+flows) to reveal their sizes. Users (systems) using different values of $V$
+can face different performance based on the dynamic interaction of flows
+from different users.
+\end{comment} 
+Our earlier research work, in~\cite{Barik2012}, performed a detailed
+simulation study in ns-2, on how a single constant value of IW-size for all
+flows affects various important metrics correlated to the performance of
+flows. What we observed from this study are: (i)~the improvement in
+response times of large flows compared to small flows is negligible with
+constant larger IW-size, and (ii),~some metrics (including mean completion
+time) get benefit with a large IW-size for all flows, while at the same
+time other metrics such as time-outs and retransmission rate are getting
+affected. Noting large IW-size of large flows being one of the causes for
+the performance degradation, we concluded that a single IW-size for all
+flows is not advisable. Considering these observations, we came up with a
+function that determines the IW-size of a flow based on its size. However,
+the proposed function depends on a number of dependent parameters, making
+it complex for analysis and deployment. 
+
+Our recent work, in~\cite{Bari1310:Evolution}, proposed a function to set
+the IW-size for each flow; and through game-theoretic analysis and
+experiments on testbed, we studied on how the different values of a
+parameter to the function affect the performance of small flows. More
+specifically, we defined a weighted function that determines IW-size of
+each flow based on its size; the core idea for this function is, {\em
+larger the flow-size, smaller the IW-size}. The current standard value of
+IW-size can be used as the lower bound for such IW function. The IW
+function for a flow of size $s$ packets is given below,
+
+\begin{equation}
+   \label{eq:iw}
+   IW(s) = 
+   \left\{
+   \begin{array}{lr}
+   V & s\leq \theta, \\
+   \lfloor\frac{\theta}{s}\times V + (1-\frac{\theta}{s}) \times
+   IW_{\min}\rfloor & s > \theta,
+   \end{array} 
+ \right.
+\end{equation}
+where $\theta$ is the flow-size threshold used to distinguish between
+large flows and the rest; $IW_{\min}$ is the lower bound (four segments,
+currently); and $V \ge IW_{\min}$ is the maximum IW-size that any
+connection can have. The parameters $\theta$, $IW_{\min}$, and $V$ are
+in number of TCP segments.
+
+
+In this paper, we focus on sharing experience on various open source tools
+for developing, experimenting and evaluating the performance of the IW
+function proposed in~\cite{Bari1310:Evolution}. First we implement the IW
+function in the TCP/IP protocol stack inside Linux kernel, and then
+design using both hardware and software components like Linux
+kernel, ipfw/Dummynet, route, ifconfig, socket programming, wireshark
+(mainly lua scripts) and etc. we evaluate the performance of flows
+using the function.
+
+The rest of the paper is organized as follows.
+Section~\ref{sec:relatedworks} overviews the related works. In
+Section~\ref{sec:development}, we preview the implementation of constant
+IW-size, and then explain the implementation of IW function in Linux
+kernel, version~3.7.4~\cite{linux} in detail.
+Section~\ref{sec:experimentation} gives a detailed description of design
+and performance evaluation in a real testbed network with real traced data
+from CAIDA `equinix-sanjose' backbone link\footnote{The CAIDA UCSD
+Anonymized Internet Traces 2013 - 25 February 2013;
+http://www.caida.org/data/passive/passive\_2013\_dataset.xml}; in this
+section, after describing the testbed, listing the metrics, we then
+evaluate the performance of flows, and compare it with a single constant
+value of IW-size for all flows. we conclude the paper in
+Section~\ref{sec:conclusions}.
+
+\section{Related Works}
+\label{sec:relatedworks}
+   
+    Many research works have come up with proposals for improving the
+response times of small flows, either by modifying the slow-start algorithm
+itself, or by entering to congestion avoidance phase by avoiding the
+slow-start penalty. For performance evaluations of various
+approaches to improve the response times of large number of small flows,
+researchers have implemented and tested their proposals in various network
+simulators and/or real testbed networks. We brief them below. 
+
+T/TCP is a transaction transport protocol in which the sender starts
+transmitting data packet along with the first segment (SYN
+packet)~\cite{Braden:1994:TTE:RFC1644}. TCP Accelerated Open (TAO) of T/TCP
+bypasses the \emph{3-way handshaking}; and thus, T/TCP saves response times
+of transactional services like RPC (remote procedure call).  A new
+slow-start algorithm for TCP connections called B-TCP was proposed in order
+to reduce response times and packet losses of small flows~\cite{b-tcp}. The
+intuitive idea in B-TCP is, the congestion window growth scheme is
+inversely proportional to the window size such that small flows transfer
+more data within few RTTs using B-TCP rather than standard TCP.
+
+%To minimize the number of packet-loss during start-up period, authors
+%of~\cite{Hoe:1996:ISB:248157.248180} used bandwidth-delay product to
+%estimate initial \emph{ssthresh}. They calculated the RTT using the SYN
+%packet, and used the least-square method to calculate the available
+%bandwidth. The {\it ssthresh}  is set to the product of available bandwidth
+%and RTT, which improves the TCP performance during start-up period. They
+%made changes to TCP protocol, and tested in both network simulator ({\em
+%NetSim}) and real networks. Their results showed a significant performance
+%improvement to small TCP flows.
+
+An earlier research work, in~\cite{Poduri98simulationstudies}, was proposed
+for increasing IW-size from one segment to three or four segments. Authors
+of~\cite{Poduri98simulationstudies} considered both long-lived  and
+short-lived TCP connections and simulated in ns-2 simulator. Recently
+Google proposed to increase the IW-size to at least $10$ segments, and they
+proposed for standardization by the IETF~\cite{increasing-IW-2010}.
+Through large-scale Internet experiments, they quantified the response
+times using a larger IW-size, that depends network bandwidth, round-trip
+time (RTT), bandwidth-delay product (BDP), and nature of the applications.
+The latency of flows even in a low-bandwidth network improved significantly
+with larger IW-size. On the negative, increasing IW-size also results in
+increased value of retransmission rate~\cite{increasing-IW-2010}.
+
+Based on flow-sizes, authors of~\cite{size-based}
+and~\cite{Zhang00speedingup} have proposed new versions of TCP called TCP
+Vienna and TCP/SPAND respectively. The motivation for TCP Vienna is to
+minimize the unfairness against the small flows; and this can be achieved
+by increasing their throughput. The TCP parameters like {\em additive
+increase}, {\em multiplicative decrease}, and Exponential increase during
+slow-start phase are adapted as function of flow-sizes. 
+%TCP Vienna is the
+%modified version of TCP NewReno; and the simulation is carried out in ns-2.
+Similarly, TCP/SPAND is an extension to standard TCP in which the protocol
+avoids slow-start phase, and enters congestion avoidance (CA)
+phase~\cite{Zhang00speedingup}; this is because of smaller throughput
+during slow-start phase. For entering to CA phase, the initial
+\emph{ssthresh} is set to IW-size; and the optimal value of IW-size is a
+function of flow-size and network state informations. 
+
+
+\begin{comment}
+\section{Simulations}
+\label{sec:simulations}
+
+This section evaluates the IW function using simulations in ns-2. First we
+implement the function using {\em tcl} script, describe the simulation
+topologies and settings, then list the metrics used for
+comparisons in our study, and discuss on the performance of both
+small and large flows. 
+
+\subsection{Development}
+   {\em Coding for IW function:} ns-2 is a discrete event driven network
+simulator primarily designed for research and development of various
+networking protocols. It is written in C++ and Otcl supporting a class
+hierarchy in C++ and a corresponding hierarchy within Otcl interpreter.
+Otcl interpreter understands the {\em tcl} scripting language, and
+interacts accordingly to C++ objects. We implement the IW function using
+tcl scripts. In the tcl script, after setting up the TCP connections
+between TCP sender and receiver agents, we then set the flow-sizes and
+start-up times for all connections. Finally, we compute the IW-size based
+on Eq.~\ref{eq:iw}, and set it using the Otcl variable {\em windowInit\_}
+(corresponding C++ variable is {\em wnd\_init\_}; {\em windowInitOption\_}
+is set to one in order to use the computed IW-size) for each TCP flow. The
+TCP connection starts sending packets in the simulated network.
+
+       
+   \subsection{Experimentation}
+      \subsubsection{Simulation Topology}
+   In our simulations, we use single-bottleneck topology to evaluate the
+performance of the IW function under different network load settings. The
+capacity $C$ of the bottleneck-link is 1~Gbps. There are 100
+source-destination node pairs, each end-node connects using a 100 Mbps
+link. The delays on the links are set such that base RTT (consisting of
+only propagation delay) is equal to 100~ms. The buffer-size of the
+bottleneck-link is set to bandwidth-delay product (1~Gbps $\times$
+100~ms), with Drop-tail buffers at all nodes. Each simulation run generated
+$20,000$ flows, with 200 flows between every source-destination pair.
+Flow-sizes are generated from a mix of two distributions---15\% of flows
+are generated from Pareto distribution with shape $1.1$ and mean flow-size
+1~MB, and remaining flows are from Exponential distribution with a mean
+flow-size of 20~KB.  All flows are carried by TCP using the SACK version.
+The packet-size is kept constant, equal to 1~KB.
+
+ %Fig.~\ref{fig:cdf} shows the cumulative fraction of total bytes
+%transferred by the generated flows, while taking the flow-sizes in
+%increasing order of magnitude. As seen, 
+Nearly 85\% of total flows could contribute to only about 20\% of the
+volume. These contain flows with sizes less than or equal to 60~KB; hence,
+for our study here, we take all such flows as `small flows'. Similarly the
+last 10\% of flows account for over 75\% of total bytes; these flows, all
+with sizes greater than 200~KB, are considered `large flow'. Therefore, we
+set $\theta$ (refer Eq.~\ref{eq:iw}) as 200.  In reality, $\theta$ can be
+set to a value between some minimum and maximum, say 60 and 200, giving the
+user freedom to configure it between these values. 
+
+\subsubsection{Performance Evaluation}
+
+  This section studies the performance of flows using the IW function
+$IW(s)$, and compares it with the performance attained by flows using a
+constant IW-size for all flows.  Recall, $V$ is the upper bound of the
+IW-size when flows use the IW function defined in Eq.~\ref{eq:iw}. In
+the case where IW-size is constant for all flows, we use $C$ to denote
+the constant IW-size (in number of packets). We evaluate the IW function
+for various values of $V$, and compare against constant IW for different
+values of $C$.  Two load settings are considered: (i)~{\it overload}, a
+scenario where the packet drop-rate is $\approx 1.5\%$ when flows use a
+constant IW with $C=4$, and (ii)~{\it underload}, a scenario where the
+packet drop-rate is close to zero with $C=4$.
+
+\underline{Study of overload scenario:} The load in the simulation is
+set in such a way so as to obtain a packet drop-rate of $\approx 1.5\%$
+with all flows using a constant IW-size, $C=4$ packets. We then maintain
+the same load for the rest of the simulations (in this scenario).
+Fig.~\ref{fig:mct_o} plots the mean completion time for range of
+flow-sizes. While $C=4$ denotes the plot of this metric for a constant
+IW-size of four segments (for all flows), the remaining are plots
+obtained with different values of $V$ in the IW function. As seen in the
+figure, the IW function gives smaller mean completion time to small flows
+in comparison to the constant IW. The improvement in response times for
+different values of $V$, compared to $C=4$, decreases with increasing
+flow-sizes.  Among the different values of $V$, $V=32$ shows a significant
+improvement, reducing mean completion time of small flows ($\le 60$) by
+$\approx 36\%$ in comparison to $C=4$; meanwhile, further reduction of
+response times is negligible with $V=64$ in comparison to $V=32$ (as we
+will also see in Table~\ref{table:overload}).
+
+% Fig.~\ref{fig:np_o} shows a
+%similar trend for the network power due to an increase in goodput and a
+%decrease in mean completion time. Observe that the value of $V$ that
+%decreases $\overline{CT}_s$, increases the goodput (i.e.  average goodput
+%of small flows). 
+\end{comment}
+\begin{comment}
+Fig.~\ref{fig:ct_o} plots the percentage improvement in $\overline{CT}_s$
+for different values of $V$ against $C=V$ and $C=4$.  This is obtained
+using the formula, $(\overline{CT}_s^{C}-\overline{CT}_s^{IW(s)})\times
+100/\overline{CT}_s^{C}$, where $\overline{CT}_s^{C}$ is the mean
+completion time of small flows obtained with a constant IW-size of $C$.
+Observe that, one bar at each point is the percentage improvement in
+comparison to $C=4$, while the other bar is the improvement in comparison
+to $C=V$ (all flows having a constant IW-size of $V$), where each point
+corresponds to a value of $V$. The figure shows that IW function improves
+the average response times significantly for the different values of $V$
+when compared against $C=4$. Comparing against $C=V$, IW functions with
+$V>=32$ give $\approx$ 13--19\% improvement in response times.
+\end{comment}
+\begin{comment}
+We analyze the trends of other metrics, listed in
+Table~\ref{table:overload}. With increasing value of $V$ upto a point,
+$IW(s)$ decreases the metric; and beyond that, it increases due to higher
+packet-losses. Considerable improvements in the metrics are observed with
+$V$ set to $32$. In particular, $V=32$ lowers ${RT}_s$ to at least
+(approximately) half in comparison to using a constant IW-size for any
+value of $C$. Similarly, with increasing value of $C$, both small and large
+flows experience higher retransmission rates compared to $C=4$; besides,
+small flows experience higher retransmission rates than large flows.
+However, for the IW function, the trend is different: the minimum value of
+$RR_s$ is obtained for $V=32$; besides for $V=32$, both small and large
+flows experience nearly same retransmission rates. The mean completion
+times of small flows are also minimum using the IW function with $V=32$. On
+the other hand, $V=64$ shows an increase in ${RT}_s$, when compared against
+$V=32$. As expected, due to increasing number of time-outs, number of
+retransmission packets increases, and hence, there will be an increase in
+retransmission rate.  $V=64$ shows an increase in ${RR}_s$ by $0.8\%$ in
+comparison to $V=32$.
+
+\underline{Study of underload scenario:} The load in the simulation is
+set so as to obtain almost zero packet drop-rate with all flows using a
+constant IW-size of four packets, i.e., $C=4$. The same load is then
+maintained for the rest of the simulations (in this scenario).
+Figures~\ref{fig:mct_u} plots the mean completion time for ranges of
+flow-sizes. We observe similar trend as in the previous scenario, though
+the improvement is lesser. The IW functions for different values of $V$
+give significantly lower response times to small flows in comparison to
+$C=4$. From Table~\ref{table:underload}, we observe that even in underload
+scenario, $IW(s)$ decreases the metrics when compared against $C=V$. 
+
+\underline{Discussions:} The above analyses show that 32 and 64 are values
+for $V$ in the IW function that improve the performance of flows, in
+particular small flows.  Between $V=32$ and $V=64$, the former gives better
+values for all metrics corresponding to performance of small flows.  Hence,
+we recommend a value of 32 for $V$ while using the IW function.  Next, we
+compare the performance of small flows using IW function with $V=32$
+against that attained by a constant IW-size of 10 segments ($C=10$) under
+overload scenario. This constant IW-size is the most recently proposed
+value, by Google~\cite{increasing-IW-2010}. 
+
+Fig.~\ref{fig:ci-mct-1} plots the mean completion time for flow-sizes
+less than equal to $60$ packets, for $95\%$ confidence interval. Observe
+that the flows with sizes $\le10$~KB (corresponding to $C=10$)  show
+almost same response times with $V=32$ in comparison to $C=10$, whereas
+for sizes in range 10 to $\approx$40~KB, IW function shows a significant
+improvement compared to constant IW-size. However, the improvement in
+response times decreases with further increase in flow-size. We observed
+that the percentage improvement obtained by $V=32$ over $C=10$ for
+flow-size ranges of $\le10$, 10--30, and 30--60, were $4\%$, $32\%$, and
+$29\%$, respectively. 
+
+%Fig.~\ref{fig:np} plots network power for $95\%$ confidence level.  For
+%$V=32$, network power increases with increasing flow-sizes, up to
+%$\approx32$~KB.  However, at flow-size of $32$~KB, there is a sudden
+%change (drop) in network power, and again, it increases with increasing
+%flow-sizes further. This sudden drop is due to the increase in RTT, as
+%the flow-size goes beyond the value of $V$, necessitating another window
+%of packets for flow completion.  However, the important observation is
+%that, flows with sizes greater than 10~KB show large improvement in
+%goodput, indicating that the value of $C=10$ is conservative.
+
+\end{comment}
+%\section{Testbed Experimentation}
+%\label{sec:testbed}
+  
+%   In this section, we evaluate the performance of flows due to IW function
+%using real traced data from CAIDA `equinix-sanjose' backbone
+%link\footnote{The CAIDA UCSD Anonymized Internet Traces 2013 - 25 February
+%2013; http://www.caida.org/data/passive/passive\_2013\_dataset.xml} (1
+%day in 2013), in a real testbed network. First we preview the
+%implementation of constant IW-size, then describe the detailed
+%implementation of IW function in Linux kernel~v~3.7.4~\cite{linux}. After
+%setting up the testbed network, we analyze the performance of IW function,
+%and then compare it with a single constant value of IW-size for all
+%flows.
+
+\section{Development}
+\label{sec:development}
+
+  This section first previews the current implementation of TCP IW in Linux
+kernel, and then describes our approach for IW function. Finally we discuss
+the detailed implementation of the function in Linux kernel.
+ 
+ \subsection{Implementation Overview of IW Function}
+        
+   We now provide a brief overview of how TCP initial window is implemented
+in standard TCP inside Linux kernel, and then describe our approach for
+implementing TCP IW function; see left-side block in
+Fig.~\ref{fig:implement}. Currently TCP IW is hardcoded inside the kernel
+according to RFC 3390~\cite{rfc3390}, and hence, user space applications do
+not have any control over it. More specifically, all TCP flows in all
+applications use constant value of IW for different flow-sizes. However,
+{\em iproute2} package~\cite{iproute} has a functionality of changing IW;
+changing IW to a larger value at the sender side is effective, only when
+the receiver side sets the advertised receive window to at least a value
+of sender side's IW-size.
+% The
+%following sets changing IW to (say) $X$ segments using {\em ip} command for
+%per route table entry.     
+\begin{comment}
+\begin{itemize}
+\item[step 1:] show route settings,
+  \shellcmd{ip route show\\
+        default via 10.6.1.254 dev eth0 proto static
+        10.6.1.0/24 dev eth0 proto kernel scope link src 10.6.1.110 metric
+1}
+\item[step 2:] change IW to $X$ segments at sender side,
+  \shellcmd{sudo ip route change default via 10.6.1.254 dev eth0 proto
+static initcwnd X}
+
+\item[step 3:] change advertised receive window to $X$ segments at receiver
+side,
+ \shellcmd{sudo ip route change default via 10.4.1.254 dev eth0 proto static initrwnd X}
+ \end{itemize}
+\end{comment}
+$initrwnd$ is the optional argument in the {\em ip} command that represents
+the value for advertised receive window at the receiver side; this variable
+is mapped to $RTAX\_INITRWND$, defined in the file
+$include/net/rtnetlink.h$. The value is extracted using the function
+$dst\_metric()$, and is set to advertised receive window inside the kernel
+using $tcp\_select\_initial\_window()$. Similarly, the value for IW at the
+sender side is set using $initcwnd$ in {\em ip} command, which is mapped to
+$RTAX\_INITCWND$. However, the value is accessed inside the kernel using
+$tcp\_init\_cwnd()$; and this function is called inside
+$tcp\_finish\_connect()$. Hence, the receiver side should know the value of
+IW that is set at the sender side, for getting the benefits from larger IW.
+
+The right-side block in Fig.~\ref{fig:implement} shows our implementation
+approach for IW function. At the application layer, the user applications
+interact with the networking functionalities inside the kernel using the
+{\em socket} programming interface. The value of IW for a TCP connection
+of a network application process passes through application layer, BSD
+socket layer, and is set in INET socket layer by $tcp\_sendmsg()$ function.
+In the application layer, applications knowing the flow-sizes of the TCP
+flows in advance compute the IW, and then call some user-defined library
+function.  The function in turn invokes the corresponding system call in
+BSD socket layer. Our approach adds a functionality of testing and using
+with different IW functions, and also with constant IW. In the BSD socket
+layer, the value of IW is assigned to a data member of $msghdr$ structure.
+Finally it is set to the sending congestion window ($snd\_cwnd$) using the
+function $tcp\_sendmsg()$ in INET socket layer; this setting of IW happens
+only once, and is after the connection has been established and before
+sending the first packet. We describe below the detailed implementation of
+IW function in Linux Kernel.
+
+  
+
+\subsection{Detailed Implementation in Linux Kernel}
+
+   The focus of this section is to describe the high-level code structure
+of implementing TCP IW function in Linux kernel; and this is illustrated in
+right-side block of Fig.~\ref{fig:implement}. Below is the detailed
+description of the implementation.
+
+\begin{figure}[h]
+   %\vspace{-0.2cm}
+   \centering
+   \includegraphics[scale=0.35]{tcp-implementation.pdf}
+   \caption{The high-level design of constant IW and IW Function in standard TCP}
+   \label{fig:implement}
+\end{figure}
+
+
+\subsubsection{Application Layer} 
+
+  At the application layer, the networking user space programs interact
+with the networking functionalities that are inside the kernel, using
+socket API, by creating a socket (this in turn returns a socket file
+descriptor). The socket API provides certain system calls through which the
+user program interacts with the network, by performing certain operations
+to the socket using the file descriptor. Once the TCP connection has been
+properly established by sending $SYN$, $SYN/ACK$ and/or $ACK$ packets using
+the system calls $connect()$ or $accept()$ accordingly, the journey of the
+network data packets start when the user program writes data to the socket.
+The application revealing the flow-size of the TCP connection in advance
+computes the IW, and then calls the function $iwtcp()$ for sending the data
+to the network. The function {\em iwtcp} is similar to the system call
+$write()$, and takes five arguments. The function definition is shown in
+below,
+
+%\begin{comment}
+ \code{static inline int iwtcp( int fd, char* buf, int count, int
+msg\_IW, int msg\_IW\_stat)\\
+\{\\
+   int \_\_res;\\
+   asm \_\_volatile\_\_ ("int \$0x80"\\
+        : "=r" (\_\_res)\\
+        : "0" (\_\_NR\_iwtcp),\\
+        "b" (fd),\\
+        "c" (buf),\\
+        "d" (count),\\
+        "S" (msg\_IW),\\
+        "D" (msg\_IW\_stat)\\
+        : "memory");\\
+      return \_\_res;\\
+  \}\\
+\#define \_\_NR\_iwtcp 350
+}
+%\end{comment}
+ The first three arguments to {\em iwtcp} function are the same as to {\em
+write}; variable {\em msg\_IW} represents the IW-size and {\em
+msg\_IW\_stat} is a boolean variable where it is one if IW function is
+used, and zero if system's default IW-size is used. This function triggers
+a software interrupt using ``{\em int \$0x80}'', and calls the function
+{\em sys\_iwtcp()} (with $32$-bit system call number as $350$ in {\em i386}
+architecture for $x86$ Linux kernel).  
+
+\subsubsection{BSD Socket Layer}
+
+At BSD socket layer, every socket represents a network connection; and the
+data that needs to be transfered to the network is stored in {\em msghdr}
+structure. {\em sys\_iwtcp} function in BSD socket layer assigns the
+members of {\em msghdr} structure to the arguments, transfered from {\em
+iwtcp()}. Here we modify the {\em msghdr} structure (defined in
+$include/linux/socket.h$) by adding new data members like {\em msg\_IW} and {\em
+msg\_IW\_stat} to incorporate the informations about IW-size.
+%\begin{comment}
+\vspace{-0.4cm}
+\code{\\
+    struct msghdr \{ \\
+	         void	*	msg\_name;	/* Socket name			*/ \\
+	         int		msg\_namelen;	/* Length of name		*/ \\
+	         struct iovec *	msg\_iov;	/* Data blocks			*/ \\
+	         \_\_kernel\_size\_t	msg\_iovlen;	/* Number of blocks		*/ \\
+	         void 	*	msg\_control;	/* Per protocol magic (eg BSD file descriptor passing) */ \\
+	         \_\_kernel\_size\_t	msg\_controllen;	/* Length of cmsg list */ \\
+	         unsigned int	msg\_flags; \\
+                  .......... \\
+	         {\bf unsigned int	msg\_IW;}		/* IW-size */ \\
+	         {\bf unsigned int	msg\_IW\_stat;}	/* Status boolean */ \\
+        \};
+}
+%\end{comment}
+The function {\em sys\_iwtcp} is defined in $include/linux/syscalls.h$, and
+its definition is in $net/socket.c$. The {\em sys\_iwtcp} calls {\em
+sock\_sendmsg} which in turn, invokes {\em \_\_sock\_sendmsg} function.
+Finally {\em \_\_sock\_sendmsg} interacts to INET socket layer by calling
+$ops\rightarrow sendmsg()$ (this function is mapped to {\em inet\_sendmsg} function,
+defined in {\em net/ipv4/af\_inet.c}). The function {\em inet\_sendmsg}
+then invokes $sk\rightarrow sk\_prot\rightarrow sendmsg()$ which is mapped to {\em
+tcp\_sendmsg()}. The {\em tcp\_sendmsg} function, defined in
+$net/ipv4/tcp.c$ is invoked whenever any user program, creating
+$SOCK\_STREAM$ type of socket sends data to network.
+ 
+%\begin{comment}
+\vspace{-0.4cm}
+\code{\\
+ asmlinkage long sys\_iwtcp(int fd, void \_\_user * base, size\_t count, unsigned msg\_IW, unsigned msg\_IW\_stat)\\
+	\{\\
+    unsigned flags=0;\\
+	   struct socket *sock;\\
+	   int err;\\
+	   struct msghdr msg;\\
+	   struct iovec iov;\\
+	  int fput\_needed;\\
+   if (count > INT\_MAX)\\
+	  	count = INT\_MAX;\\
+	 sock = sockfd\_lookup\_light(fd, \&err, \&fput\_needed);\\
+	 if (!sock)\\
+		goto out;\\
+ iov.iov\_base = base;\\
+	iov.iov\_len = count;\\
+	msg.msg\_name = NULL;\\
+	msg.msg\_iov = \&iov;\\
+	msg.msg\_iovlen = 1;\\
+	msg.msg\_control = NULL;\\
+	msg.msg\_controllen = 0;\\
+	msg.msg\_namelen = 0;\\
+	msg.msg\_IW = msg\_IW;\\
+	msg.msg\_IW\_stat = msg\_IW\_stat;\\
+	if (sock->file->f\_flags \& O\_NONBLOCK)\\
+		  flags |= MSG\_DONTWAIT;\\
+	msg.msg\_flags = flags;\\
+	err = {\bf sock\_sendmsg(sock, \&msg, count)};\\
+out:\\
+	return err;\\
+  \}\\
+}
+%\end{comment}
+
+\subsubsection{INET Socket Layer}
+
+At INET socket layer, the most important structure is {\em sock} which is
+of type TCP or UDP; and the data is stored in {\em sk\_buff} structure.  We
+added an extra data member called {\em tcp\_IW\_stat} (boolean variable) to
+{\em tcp\_sock} structure; this data member is initialized to one by
+invoking {\em tcp\_init\_sock} function. The use this variable is to ensure
+that IW-size for a TCP connection is used only once, during the first
+slow-start phase (see, {\em tcp\_IW\_stat} is set to zero for remaining
+life time of the connection when {\em tcp\_sendmsg} function is invoked).
+The initial sending buffer ({\em sk\_sndbuf}) is updated according to
+IW-size. We set the IW-size using the {\em snd\_cwnd} inside {\em
+tcp\_sendmsg} function defined in the file $tcp.c$.  
+%\shellcmd{
+%   tar -jxvf linux-3.7.4.tar.bz2
+% }
+%\shellcmd{
+%   cp /boot/config-3.0.0-12-generic .config
+% }
+%\shellcmd{
+%   make menuconfig;make-kpkg clean
+%   }
+%\shellcmd{
+%   fakeroot make-kpkg -j 8 --initrd --append-to-version=Custom
+%kernel\_image kernel\_headers
+% }
+%\shellcmd{
+%    sudo dpkg -i linux-headers-3.7.4\_3.7.4-10.00.Custom\_i386.deb
+%linux-image-3.7.4\_3.7.4-10.00.Custom\_i386.deb
+% }
+%\begin{comment}
+\vspace{-0.4cm}
+ \code{\\ 
+    int tcp\_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr
+*msg, size\_t size)\\
+\{ \\ 
+        ..............\\
+        if (tp->tcp\_IW\_stat == msg->msg\_IW\_stat \&\& msg->msg\_IW\_stat
+== 1)\\
+	\{\\
+        	tp->snd\_cwnd = msg->msg\_IW;\\
+		       tp->tcp\_IW\_stat = 0;\\
+		       int sndmem = SKB\_TRUESIZE(tcp\_sk(sk)->rx\_opt.mss\_clamp + MAX\_TCP\_HEADER);\\
+        	sndmem *=tp->snd\_cwnd;\\
+	        if (sk->sk\_sndbuf < sndmem)\\
+		           sk->sk\_sndbuf = min(sndmem, sysctl\_tcp\_wmem[2]);\\
+	\}\\
+        ..............\\
+\}\\
+  }
+%\end{comment}
+We set {\em TCP\_DEFAULT\_INIT\_RCVWND} to $64$~KB.
+
+%\TODO{Setting of receive window; compilation of Linux kernel} 
+ 
+   \section{Experimentation}
+    \label{sec:experimentation}
+       The aim of the experiments is to evaluate the performance of TCP
+flows---mostly mice flows---on a real testbed network with real-world
+links, hosts, networking hardwares, and collected data from the
+Internet. The work of~\cite{Allman1999} inspired us while designing the
+testbed, and conducting the experiments, especially for deciding what
+application should be used to transfer the data, on how to collect the data
+traffic accurately from TCP senders, and on what tools should be used to
+analyse the traced data. 
+          
+\subsection{Testbed Setup}
+  
+  The testbed we set up is a Dummynet~\cite{dummynet} based network, and
+consists of Linux machines: one pair of machines for TCP senders and
+receivers, and the other pair which are configured as routers; see
+Fig.~\ref{fig:testbed}.  Dummynet---software network emulator---is used
+to emulate links of different bandwidths, delays, and create buffers of
+finite sizes. All the links except for the bottleneck link (link between
+the two routers) have capacity~$100$ Mbps; for different types of
+experiment run, we vary the bottleneck link capacity~$B$ and base RTT
+(consisting of two-way propagation delay) using Dummynet. The buffer-size
+at the router for the bottleneck link is set to bandwidth-delay product,
+with FIFO scheme.
+
+\begin{figure}[h]
+   %\vspace{5cm}
+   \centering
+   \includegraphics[scale=0.35]{testbed.pdf}
+   \caption{Testbed Layout}
+   \clearpage
+   \label{fig:testbed}
+%\vspace{5cm}
+\end{figure}
+
+   
+\subsubsection{Application for traffic generator}
+
+ Using socket programming, we develop an application that generates TCP
+traffic. More specifically, the application opens a socket, transfers a
+fixed amount of data to the receiver, and then exits; and this generates a
+single TCP flow.  Using an external application {\em
+parallel}~\cite{parallel} and shell script,
+we open multiple TCP connections; and their sizes and start-up times are
+taken from collected data. Each experiment run $10,000$ flows sampled
+randomly with replacement from CAIDA dataset. We add no background traffic
+in our experiments.
+
+%\vspace{0.1cm}   
+\subsubsection{TCP senders and receivers}
+
+ For TCP connections, we run them from Linux kernel, version~3.7.4. TCP
+buffers inside the kernel should not be a bottleneck; and hence, we must
+tune the buffers. The variables like, tcp\_mem, tcp\_rmem, tcp\_wmem,
+wmem\_max, rmem\_max, rmem\_default, and wmem\_default inside the {\em
+proc/sys} directory are modified on both senders and receivers.
+\begin{comment} 
+          \code{\\
+echo "12582912 12582912 12582912" > /proc/sys/net/ipv4/tcp\_mem\\
+echo "163840" > /proc/sys/net/core/rmem\_default\\
+echo "163840" > /proc/sys/net/core/wmem\_default\\
+echo "12582912" > /proc/sys/net/core/wmem\_max\\
+echo "12582912" > /proc/sys/net/core/rmem\_max\\
+echo "10240 87380 12582912" >/proc/sys/net/ipv4/tcp\_rmem\\
+echo "10240 87380 12582912">/proc/sys/net/ipv4/tcp\_wmem
+		}
+\end{comment}
+Normally Linux remembers the last slow-start threshold value, and hence,
+for multiple connections, we need to set the variable {\em
+tcp\_no\_metrics\_save} to $1$, and {\em net.ipv4.route.flush}=1 using
+command {\em sysctl}. At the receiver, the variable `{\em
+netdev\_max\_backlog}' dictates the maximum number of packets that can be
+queued in buffer inside the kernel for processing by the TCP receiving
+process; we set a high value for this variable. The IP addresses and routes
+are set using {\em ifconfig} and {\em route} commands.
+%\begin{comment}
+%\vspace{-0.25cm}
+%\code{\\
+ %     echo "1" > /proc/sys/net/ipv4/tcp\_no\_metrics\_save\\
+ %     echo "5000" > /proc/sys/net/core/netdev\_max\_backlog\\
+ %     sysctl -w net.ipv4.route.flush=1
+%}
+%  \shellcmd{
+%      ifconfig eth1 10.8.2.1 netmask 255.255.255.0 broadcast 10.8.2.255
+%      }
+%  \shellcmd{
+%      route add -net 10.8.0.0/16 gw 10.8.2.10
+%	    }
+%\vspace{-0.3cm}
+We set up the Dummynet pipes and IPFW rules as follows:
+\code{\\
+%ipfw -q flush \\
+%ipfw -q pipe flush \\
+ipfw add pipe 1 proto tcp out via eth1\\
+ipfw pipe 1 config delay 10ms queue 1000Kbytes bw 100Mbit/s\\
+%ipfw pipe show
+      }
+
+%\vspace{0.1cm}
+\subsubsection{Routers}
+
+ The routers are configured with two network interface cards, and with IP
+addresses, using {\em ifconfig} and {\em route} commands, referring to
+Fig.~\ref{fig:testbed}. Using ipfw/Dummynet package, we set up pipes for
+creating links of different bandwidth, and delays. The queue-size of the
+pipe is set to bandwidth-delay product, with DropTail scheme. The following
+are the Dummynet pipes for the routers:
+
+\vspace{-0.4cm}
+\code{\\
+%ipfw -q flush \\
+%ipfw -q pipe flush \\
+ipfw add pipe 1 proto tcp out via eth0 \\
+ipfw pipe 1 config queue 125KBytes delay 30ms bw 10Mbit/s \\
+ipfw add pipe 2 proto tcp in via eth1 \\
+ipfw pipe 2 config queue 20KBytes delay 10ms \\
+%ipfw pipe show
+}               
+
+\section{Performance Evaluation}
+\label{sec:perf}
+    In this section, we first process the traced data from the testbed
+using {\em lua} script, then list the metrics. we study the
+performance of flows using the IW function, and compare it with the
+performance attained by flows using a constant IW-size for all flows.  
+\subsection{Data Processing}
+
+       This section elaborates the post-processing of the data file traced
+using {\em tcpdump}. We process the traced data using {\em lua} script in
+{\em wireshark} (a packet analysing tool); more specifically, for
+collecting the metric values required for performance analyses, we use a
+{\em lua script} as a listener, after each packet has been dissected using
+{\em tshark} command. The command {\em tshark} (a terminal oriented version
+of wireshark) is used in the following way:
+
+    \shellcmd{
+       tshark -X lua\_script:TcpStream.lua -r data.pcap \\ 
+     }
+The file `TcpStream.lua' contains a listener named as {\em tap} which is
+called once for every packet that matches a certian filter. A listener
+should have the functions like, {\em packet()}, {\em draw()}, and {\em
+reset()}; hence, we redefined the functions in the {\em lua} script. The
+modified function listener.packet() dissects each packet, and retrieves
+different fields related to performance analysis. The following are the
+fields extracted from each packet:
+ \begin{itemize}
+   \item {\em tcp.len} for TCP segment length;
+   \item {\em tcp.analysis.retransmission} for retransmission; 
+   \item {\em tcp.analysis.rto\_frame} for retransmission by time-out;
+   \item {\em tcp.analysis.lost\_segment} for lost segment. 
+ \end{itemize}
+The response time for a flow is calculated using start-, and stop-times; the
+start-time is initialized using {\em pinfo.rel\_ts} read-only variable. We
+modified the function {\em listener.draw()} that computes the metric
+values, and writes to a file. The function {\em listener.reset()} is called
+at the end of experiment run; we have not redefined this function.
+The following are the metrics derived by considering the fields described above:
+\begin{itemize}
+
+  \item {\it Mean completion time} for small ($\overline{CT}_s$) and
+	large ($\overline{CT}_l$) flows, conditioned on flow-size. 
+
+ % \item {\it Number of congestion-cuts} (number of times TCP's
+%	congestion-window is reduced) for small (${CC}_s$) and all
+%	(${CC}_a$) flows.
+
+  \item {\it Number of TCP retransmission time-outs} encountered by small
+	flows, ${RT}_s$.
+
+  \item {\it Retransmission rates} for small (${RR}_s$) and large
+	(${RR}_l$) flows, defined as the percentage of the number of
+	retransmitted packets to the actual number of packets transmitted,
+	for flows in the considered size-range. 
+
+  \item {\it Mean completion time} for range of flow-sizes.
+
+  %\item {\it Network Power} for range of flows-sizes, defined as average
+	%goodput---application-file-size/completion-time---divided by mean
+	%completion time of flows in the considered size-range. This
+	%definition is similar to the one in RFC 2415~\cite{rfc2415}.
+
+\end{itemize} 
+
+We observed that nearly 96\% of total flows could contribute to only about
+8--9\% of the total traffic volume. These contain flows with sizes less
+than or equal to 60~KB; hence, for our study here, we take all such flows
+as `small flows'. Similarly the last 2\% of flows account for over 85\% of
+total bytes; these flows, all with sizes greater than 200~KB, are
+considered `large flow'. Therefore, we set $\theta$ (refer Eq.~\ref{eq:iw})
+as 200 KB.  In reality, $\theta$ can be set to a value between some minimum
+and maximum, say 60 and 200, giving the user freedom to configure it
+between these values.
+
+Here bottleneck bandwidth $B$, and the round-trip-delay RTT are set to
+$20$~Mbps, and $100$~ms respectively. The flow-sizes and start-up times of
+all TCP flows were taken from the real dataset. Recall, $V$ is the maximum
+IW-size that any connection can have when it uses the IW function defined
+in Eq.~\ref{eq:iw}; we use $C$ to denote the constant IW-size when all
+flows use a single constant value of IW-size.  Fig.~\ref{fig:mct} plots the
+mean completion time for range of flow-sizes.  Observe that, small flows
+achieve smaller mean completion times with the IW function than with a
+constant IW-size. Small flows gain $\approx 17\%$ improvement in response
+times with $V=16$ in comparison to $C=4$. Moreover, $V=16$ also shows a
+significant improvement, reducing response time of the range of flow-sizes
+(60--200) by $\approx 38\%$ in comparison to $C=4$.  However, with
+increasing flow-sizes further, the improvement decreases. 
+
+\begin{figure}[h]
+   %\vspace{-0.2cm}
+   \centering
+   \includegraphics[scale=1.0]{MeanCT.pdf}
+   \caption{Mean completion time for ranges of flow-sizes}
+   \label{fig:mct}
+   %\vspace{5cm}
+\end{figure}
+\begin{figure}[h]
+   %\vspace{-0.2cm}
+   \centering
+   \includegraphics[scale=1.0]{improvement_mct.pdf}
+   \caption{Percentage improvement in $\overline{CT}_s$ for $IW(s)$ w.r.t. $C=V$, and $C=4$}
+   \label{fig:ct}
+   %\vspace{-0.5cm}
+\end{figure}
+
+Fig.~\ref{fig:ct} plots the percentage improvement in $\overline{CT}_s$ for
+different values of $V$ against $C=V$ and $C=4$.  This is obtained using
+the formula, $(\overline{CT}_s^{C}-\overline{CT}_s^{IW(s)})\times
+100/\overline{CT}_s^{C}$ Notice that, one bar at each point is the
+percentage improvement in comparison to $C=4$, while the other bar is the
+improvement in comparison to $C=V$, where each point corresponds to a value
+of $V$. The figure shows that IW function improves the average response
+times significantly for the different values of $V$ when compared against
+$C=4$. Comparing against $C=V$, IW functions with $V>=16$ give $\approx$
+7--17\% improvement in response times.
+
+\begin{table}[h]
+	      %\vspace{5cm}
+        \centering
+       % \renewcommand{\arraystretch}{1.1}
+         \caption{Comparison of other metrics}
+         \resizebox{12.0cm}{!}{
+ 	             \begin{tabular}{|+l||^c||^c|^c||^c|^c|}
+  	          % \multicolumn{6}{}{}
+  	           %\setlength{\tabcolsep}{1pt}	\\
+   	           \hline
+    Parameter & ${RT}_s$  & ${RR}_s$ & ${RR}_l$ &  $\overline{CT_s}$ & $\overline{CT_l}$  \\ \hline \hline 
+    $C$=4 & 599 & 0.7  & 3.5 & 0.369 & 14.284 \\ \hline
+    \rowstyle{\bfseries}$C$=10 & 893  & 0.8 & 4.0 & 0.351 & 14.243 \\ \hline
+    $C$=16 & 1659 & 1.4  & 5.7 & 0.375 & 13.78 \\ \hline
+    $C$=32 & 1528 & 1.3  & 9.2 & 0.352 & 12.9\\ \hline
+    $C$=45 & 1270  & 1.2  & 11.2 & 0.359  & 11.77 \\ \hline
+	\hline
+    $V$=10 & 805 & 0.8  & 4.0 & 0.343 & 14.148 \\ \hline  
+    \rowstyle{\bfseries}$V$=16 & 665 & 0.5  & 3.4 & 0.309 & 12.420 \\  \hline
+    $V$=32 & 754  & 0.6 & 5.2 & 0.323 & 13.845\\ \hline
+    $V$=45 & 898  & 0.8  & 7.5 & 0.334 & 12.6 \\ \hline
+    %$C$=128 & 2136 & 5.4  & 5.3 & 2984 & 5680 & 0.684  & 2.623 \\ \hline
+    %$V$=128 & 1295 & 3.2  & 3.4 & 1802 & 3738 & 0.556 & 2.481 \\ \hline
+ 	           \end{tabular}
+          } 
+         \label{table:testbed-overload}
+%\vspace{-0.4cm}
+\end{table}
+
+We analyze the trends of other metrics, listed in
+Table~\ref{table:testbed-overload}. With increasing value of $V$ upto a
+point, $IW(s)$ decreases the metric; and beyond that, it increases due to
+higher packet-losses. Considerable improvements in the metrics are
+observed with $V$ set to $16$. In particular, $V=16$ lowers ${RT}_s$ to at
+least (approximately) half in comparison to using a constant IW-size for
+any value of $C$, larger than $16$. Similarly, with increasing value of
+$C$, both small and large flows experience higher retransmission rates
+compared to $C=4$. With $V$ set to $16$, small flows show minimum value of
+${RR}_s$ when compared with any other value of $V$; on the other hand, they
+face an increase in metric values with $V>16$, when compared against
+$V=16$.
+
+
+\subsubsection*{\underline{Impact of varying RTT}} 
+
+Here we vary the RTT; the RTT is set to \{20, 50, 100, 200\}~ms. This
+experiment run $2,000$ flows sampled randomly with replacement from CAIDA
+dataset; the capacity of bottleneck link is set to 10~Mbps. The arrival
+rate of the TCP flows in this experiment is set in such a way so as to
+obtain a packet drop-rate of $\approx 1.4\%$ with all flows using a
+constant IW-size, $C=4$ packets.  Fig.~\ref{fig:rtt} plots the absolute
+improvement in $\overline{CT}_s$ for different values of $C$ and $V$
+against $C=4$.  Observe that, for different values of RTT, IW function
+shows better improvement in response time than constant IW; besides, with a
+larger RTT, $V=16$ gives better performance.
+
+\begin{figure}[h]
+   %\vspace{-0.5cm}
+   \centering
+   \includegraphics[scale=1.0]{improvement.pdf}
+   \caption{Absolute improvement in $\overline{CT}_s$}
+   \label{fig:rtt}
+   %\vspace{-0.5cm}
+\end{figure}
+
+\section{Conclusions}
+\label{sec:conclusions}
+
+In this paper, we shared the
+experience of using some important open source tools for developing,
+experimenting and evaluation the proposed IW function. We implemented the
+size-based IW function in the Linux kernel, version~3.7.4; we used
+ipfw/Dummynet for emulating links, open source tool called parallel for
+executing the application in parallel for generating TCP traffic, wireshark
+(along with {\em lua} script) for extracting metrics for performance
+analysis. Using the above tools, we designed a testbed network for
+performance evaluations. Our experimental studies evaluated the performance
+attained by flows using the IW function for various values of $V$; and we
+observed that $V=16$ shows a significant improvement of the metrics when
+compared against $C=4$; Moreover, our results signify that the function
+performs better than a constant IW-size for all flows, while at the same
+time not affecting the performance of large flows. In future, we plan to
+work on the scenario where there is a mix of flows that know their sizes in
+advance and those that do not.   
+
+
+
+%\bibliographystyle{IEEEtran}
+%\bibliographystyle{elsarticle-num}
+%\bibliography{references}
+
+
+%\begin{comment}
+

@@ -1,0 +1,93 @@
+%%----------------------------------------------------------------------------
+%%----------------------------------------------------------------------------
+%\documentstyle[myMS, psfig, epsf, cite, float, subfigure, graphicx, verbatim, amssymb]{newdiss}
+\documentclass[12pt,twoside,openright]{iitmMyPhD}
+%\documentstyle[ms, psfig, epsf, cite, float, subfigure, graphicx, verbatim, amssymb,txfonts,multirow,lscape]{newdiss}
+%\usepackage{psfig, epsf, cite, float, subfigure, graphicx, verbatim, amssymb,txfonts,multirow,lscape}
+\usepackage{ epstopdf, color, cite, float, subfigure, graphicx, verbatim, amsmath, amsthm, amssymb, txfonts, multirow, lscape, setspace, rotating}
+\usepackage{url}
+\usepackage{placeins}
+\usepackage[small]{caption}
+\usepackage{times, amsmath, comment, algorithmic, algorithm, array}
+%\usepackage{graphics}
+\usepackage{appendix}
+\usepackage[autostyle]{csquotes}
+\def\bt{\begin{Theorem}}
+\def\et{\end{Theorem}}
+\def\bex{\begin{Example}}
+\def\eex{\end{Example}}
+%\def\bex{\begin{Proof}}
+%\def\eex{\end{Proof}}
+\def\bl{\begin{Lemma}}
+\def\el{\end{Lemma}}
+\def\bcor{\begin{Corollary}}
+\def\ecor{\end{Corollary}}
+\def\bd{\begin{Definition}}
+\def\ed{\end{Definition}}
+\def\br{\begin{Remark}}
+\def\er{\end{Remark}}
+\newtheorem{thm}{Theorem}[section]
+\usepackage[breaklinks=true, hidelinks]{hyperref}
+\newcommand{\TODO}[1]{{\bf \color{red} ToDo: #1}}
+\newcommand{\NOTE}[1]{{\bf \color{blue} Note:: #1}}
+\newcommand{\VFY}[1]{{\bf \color{magenta} Verified: #1}}
+\newtheorem{Lemma}{Lemma}[section]
+\newtheorem{Theorem}[Lemma]{Theorem}
+\newtheorem{Proposition}[Lemma]{Propostion}
+\newtheorem{Corollary}[Lemma]{Corollary}
+\newtheorem{Definition}[Lemma]{Definition}
+\newtheorem{Remark}[Lemma]{Remark}
+\newtheorem{Example}[Lemma]{Example}
+\newtheorem{Result}[Lemma]{Result}
+
+%\documentclass{MS}
+%\usepackage{graphicx}
+%\usepackage{cite}
+%\usepackage{epsf}
+%\usepackage{float}
+%\usepackage{amsmath}
+%\usepackage{amssymb}
+
+%%\setlength{\topmargin}{-1.0cm}
+\setlength{\topmargin}{1.0cm}
+\setlength{\textwidth}{15.42cm}
+%% \setlength{\textwidth}{16.40cm}  % TO SAVE PAGES WHILE PREPARING ROUGH DRAFT.
+%\setlength{\textheight}{22cm}     % FOR DOTMATRIX PRINTER.
+\setlength{\textheight}{23cm}
+%\setlength{\textheight}{21cm}
+%\setlength{\textheight}{25cm}    % TO SAVE PAGES WHILE PREPARING ROUGH DRAFT.
+\setlength{\oddsidemargin}{0.52cm}
+\setlength{\evensidemargin}{0.6cm}
+\setlength{\headheight}{0.0cm}
+\setlength{\headsep}{0.0cm}
+\setlength{\parskip}{0.0cm}
+\setcounter{secnumdepth}{5}
+\setcounter{tocdepth}{5}
+\renewcommand{\baselinestretch}{1.5}
+
+%--------------------------------------------------------------------------
+% ORDER OF THESIS CONTENTS SUGGESTED BY THE INSTITUTE.
+%- - - - - - - - - - - - - - - - - - - - - - - - - - -
+% cover page
+% inside cover page
+% Quotations (if any)
+% dedication page
+% certificate
+% acknowledgements
+% abstract
+% table of contents
+% list of tables
+% list of figures
+% glossary (if any)
+% abbreviations
+% notation
+% chapters
+% appendices
+% references 
+% list of papers based on thesis
+% curriculum Vitae    ->   (Only while submitting A5 copy, finally)
+% Doctoral committee  ->   (Only while submitting A5 copy, finally)
+%--------------------------------------------------------------------------
+% TO GET BOLDFACE GREEK LETTERS IN THE MAIN TEXT USE:
+% ${\boldmath \mbox{$\Xi$}} $
+%--------------------------------------------------------------------------

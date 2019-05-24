@@ -1,0 +1,55 @@
+\clearpage
+\thispagestyle{empty}
+~\clearpage
+%\graphicspath{{Figures_chapter-2/}}
+\chapter{Flash, SAR, and Flash-SAR}
+\label{sarvsflashsar}
+%\pagenumbering{arabic}
+
+\section{Introduction}\label{2}
+First use of a data-converter system dates back to 18$^{th}$ century. These data-converters were hydraulic in nature~\cite{handbook}. Since then, many data converter architectures have been proposed. Two of the noted ADCs among these are flash and SAR ADCs. This chapter provides a brief about these architectures and the compares them with the proposed flash-SAR ADC architecture.
+
+\section{Flash ADC}  
+For a long time, flash ADC have been at the forefront of the fast ADCs. This ADC requires just one clock cycle to convert a sampled input signal~$\text{V}_\text{IN}^*$ to the output digital code~$\text{B}_\text{OUT}$. A block diagram of the flash ADC is shown in Fig.~\ref{flash}. However, this fast conversion is possible because of a large number of hardware components.
+
+The flash ADC uses 2$^\text{N-1}$ comparators to generate an \textbf{N}-bit output. Also, it uses N+1 resistors for the same. The resistors make a resistive divider at each node and generate a reference seperated by $\text{V}_\text{DD}/2^\text{N}$~V. These references are simultaneously compared with the sampled input signal. The comparators produce a thermometric code corresponding to the input signal. This thermometric code is passed to a T-to-B convereter, which converts the thermometric code to the binary code at the output. 
+
+\begin{figure}
+	\centering
+	\includegraphics[width = \columnwidth]{flash}
+	\caption{Block diagram of an N-bit flash ADC.}
+	\label{flash}
+\end{figure}
+
+The flash ADC uses N-1 comparators and hence consumes large amounts of power. The bandwidth requirement for the comparators is $F_s$ for the flash ADC, where $F_s$ is the sampling frequency. Large power and area requirements make the flash ADC a choice for low-to-medium resolutions.
+
+\section{SAR ADC}
+The SAR ADC works on the binary search technique~(\cite{david_1969}). This ADC works recursively on an analog input voltage to produce a digital output code. 
+
+The SAR ADC performs a binary search between positive and negative reference voltages to produce a digital output for the input voltage applied to it. The binary search is a recursive technique and it requires \textit{\textbf{N}} clock cycles to produce the converted digital code~(where, \textit{\textbf{N}} is the number of bits in the output of an ADC.). A SAR ADC consists of a sample and hold~(S/H), a comparator, a SAR logic and a DAC in it's simplest form. The block-diagram of a SAR ADC is shown in Fig.~\ref{sar}. 
+
+The conventional SAR architecture is best suitable for medium-speed ADC realization~($< 100$~MS/s). The limitation of the architecture is the bandwidth requirement of the comparator~($\textit{\textbf{N}}\times F_s$) for sampling frequency $F_s$. Hence, it consumes more power, if the ADC is designed for higher than $100$~MS/s. Furthermore, there is a requirement of the components to be designed with the bandwidth of ($\textit{\textbf{N}}\times F_s$), for sampling frequency of $F_s$~(\cite{mccreary_1975}).
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width = \columnwidth]{sar1}
+	\caption{Block diagram of a SAR ADC.}
+	\label{sar}
+\end{figure}
+
+\section{Flash-SAR Hybrid ADC}
+\hspace{0.15in} Fig.~\ref{basic} shows an n-bit per stage flash-SAR hybrid ADC, where \textit{\textbf{n}} is the number of bits resolved in one stage.  
+The flash-SAR hybrid ADC uses the conventional binary search algorithm along with parallel conversion of partial bits. The search space is divided into $2^\text{\textit{\textbf{n}}}$ parts. Hence, for \textit{\textbf{N}} clock cycles, a flash-SAR hybrid ADC produces $\text{\textit{\textbf{n}}}\times \text{\textit{\textbf{N}}}$ number of bits. %Fig.~\ref{search} shows the difference in search mechanisms in a conventional SAR and a Flash-SAR hybrid ADCs.
+
+The flash-SAR hybrid ADC needs $2^\text{\textit{\textbf{n}}}$ comparators, $2^\text{\textit{\textbf{n}}}$ DACs, and supporting circuitry. %Hence, the Flash-SAR ADC is more hardware expansive than the SAR ADC.
+However, the stringent requirements on the comparator bandwidth are bypassed in the flash-SAR hybrid architecture. The comparator needed for flash-SAR hybrid ADC design needs $\frac{\textit{\textbf{N}}}{\textit{\textbf{n}}}\times F_s$ of bandwidth.  
+The number of stages and number of bits per stage~($\text{\textit{\textbf{n}}}$) for a flash-SAR hybrid ADC may be calculated from area-speed tradeoff.
+\begin{figure}[!htb]
+	
+	%\subfigure[]{\includegraphics[width= 0.9\columnwidth]{BASIC}}
+	\includegraphics[width=\columnwidth]{flash_sar}
+	\caption{~An n-bit per stage flash-SAR hybrid ADC.}
+	\label{basic}
+	
+\end{figure}
+
+\clearpage 

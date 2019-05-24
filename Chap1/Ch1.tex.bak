@@ -1,0 +1,53 @@
+%~\clearpage
+\chapter{Introduction}
+\label{chap1_introduction}
+\section{Background and Literature Survey}
+\hspace{4em} Electronic communication systems such as RF recievers, ethernet, digital signlal processor (DSP) based serial links require high speed and medium resolution  analog-to-digital-converters (ADCs)\cite{16},\cite{13}. Further, such high speed medium resolution ADCs find application in millimeter wave radio detection and ranging (RADAR) systems as pulsed radar systems. The system can be further used for automated driving control\cite{18}.
+
+The architecture of an ADC is chosen carefully to achieve the desired trade-off between number of bits, sampling rate and power consumption. The flash architecture is preferred for high speed applications at the cost of power consumption. In the flash architecture, number of decision-making comparators increase with the number of bits\cite{12,19,20}. Generally, the successive approximation register (SAR) architecture is efficient in performing data conversion for medium speed applications\cite{12,19,20}. The pipeline ADC suffers from the problem of latency\cite{12,19,20,1}. Also, power consumption increases with the number of stages in pipeline ADC. The Sigma-Delta ADCs are particularly a good choice for getting a high resolution; however, for high speed applications, the resolution is less\cite{19}. Time-Interleaved ADCs were proposed for higher speed operation, but they suffer with the problem of inter-channel mismatch\cite{1,3,8,11,15,24}. A multi-bit per stage conversion reduces the number of cycles as compared to conventional SAR architecture and hence improves the speed and power\cite{21,22,29}. The Proposed design improves the speed and performance by using a 3-bit flash ADC with a SAR approach. This architecture is better known as multi-bit hybrid architecture \cite{26,5}.
+
+Newer designs combine SAR with pipeline\cite{25,26} or time interleave the SAR architectures to achieve good speeds\cite{1,3,8,15,24} or resolution. The state-of-the-art designs consume 110~mW power for 6-bits at 30~GSPs conversion speed with time interleaved architecture\cite{24}. SAR pipeline hybrid can achieve 12-bit resolution at 210~MSPs with 5.3~mW power consumption\cite{25}. This work describes the design of a flash SAR ADC for a sample rate of 1~GSPs. This work presesnts the design of the SAR ADC for a resolution of 6~bits, and targeted for high speed communication applications. An anti-aliasing filter, sampling, quantization and encoding are the processes involved in an analog-to-digital conversion. 
+
+The selection of DAC architecture plays a vital role for the overall performance of an ADC. The settling speed and accuracy of the DAC determine the conversion speed and effective number of bits~(ENOB) of the ADC, respectively. The charge scaling DAC is preferred in SAR ADCs for their low power consumption and inherent sampling capability on the capacitor array itself~(\cite{com1}). Further to reduce the area of the DAC, a split-capacitor array CDAC is the usual choice~(\cite{cao_2009}). 
+
+The need for high speed ADC architectures is high on demand because of high speed communication specifications. The scaling of transistor technology improves the speed of operation. The dynamic comparator architectures are modified for improved speed and resolution. The Offset cancellation techniques\cite{7}, time interleaved, and pipeline architectures with SAR topology has drastically improved the efficiency of the converters. For higher resolution ADC, different offset calibration techniques are being developed and when designed with interleaving technique can further improve the performance with reduced power. 
+
+The high-speed ADCs use dynamic comparators to achieve fast conversion time and very good energy efficiency~(\cite{cao_2009,fang_2017,almarashli_2016}). However, the high-speed dynamic comparators consume a large amount of power. Another interesting approach is to use inverters as comparators for the flash ADCs~(\cite{glesner_2014}). 
+
+%This work describes the design of a 3-bit per stage flash-SAR hybrid ADC for a sampling rate of 1~GS/s and a resolution of 6~bits. This work proposes a 6-bit segmented split-capacitor array CDAC. Moreover, in this paper, an inverter based comparator is proposed, to reduce the power consumption and maintain similar performance as a conventional comparator. 
+
+\section{Objective and scope of work}
+This work has been done with following objectives in mind:
+\begin{itemize}
+	\item Exploring a new ADC architecture to understand the concepts and processes involved in the design of a mixed-signal system.
+	\item Design of a high-speed~(GHz) ADC with medium resolution~(6-bit), which can suitably replace the power and area expensive flash ADC.
+	\item Design of the ADC which can achieve a low figure-of-merit~(FOM), and hence, can be used for wireless hand-held devices.
+\end{itemize}
+
+This work describes the design of a 3-bit per stage flash-SAR hybrid ADC for a sampling rate of 1~GS/s and a resolution of 6~bits. This work proposes a 6-bit segmented split-capacitor array CDAC. Moreover, in this work, an inverter based comparator is used, to reduce the power consumption and maintain similar performance as a conventional dynamic comparator. 
+
+\section{Contribution}
+This work contributes to the research in following manner:
+\begin{itemize}
+	\item The thesis explores a new flash-SAR ADC architecture and provides it's benefits in comparison of the conventional architectures.
+	\item This work uses segmented split-capacitor CDAC to reduce the area and power of the whole architecture.
+	\item Further, the segmented nature of the CDAC also helps to remove the T-to-B converter from the loop and ensures faster ADC operation.
+	\item The design uses a asynchronous fully custom digital logic, which is not based on the multiplexers. The logic used here in this work uses D flip-flops and a ring counter.
+	\item The ADC achieves an FOM comparable to the state-of-the-art works and hence establishes the credibility of flash-SAR hybrid ADC as a replacement for the flash ADC. 
+\end{itemize}
+
+
+\section{Thesis Organisation}
+This work is organised in 7 chapters.
+\begin{itemize}
+	\item Chapter~\ref{chap1_introduction} introduces the topic, providing a brief overview of available ADC architecures. Further, the chapter discusses the objective and scope of the work presented in the thesis.
+	\item Chapter~\ref{sarvsflashsar} provides abrief about the conventional architectures of flash and SAR ADCs. Then this chapter further elaborates similarities and differences between the conventional architectures and the flash-SAR hybrid ADC architecture.
+	\item Chapter~\ref{chap3_CDAC} discusses various CDAC topologies. This chapter also elaorates on the type of the `switches', an integral part of the DAC design. Further, the implementation of the CDAC is elaborated in this chapeter. 
+	\item Chapter~\ref{chap4_comparator} provides a comparision of the static and dynamic comparator architectures. A glimpse is given about the inverter based comparators and how they can replace the conventional comparators in the flash and SAR ADCs.
+	\item Chapter~\ref{chap5_logic} discusses the digital logic and control circuitry for the flash-SAR ADC. It discusses various topologies and their advantages and disadvantages. Further, it describes the logic used in this work.
+	\item Chapter~\ref{chap6_simulation} discusses the simulation results for the ADC.
+	\item Chapter~\ref{chap7_conclusion} concludes the work and dicusses future scope of the work.
+	\item References are given in the bibliography.
+\end{itemize}
+
+\clearpage 

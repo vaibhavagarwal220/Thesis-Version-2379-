@@ -1,0 +1,35 @@
+~\clearpage
+\chapter{Introduction}
+\label{chap1_introduction}
+%\pagenumbering{arabic}
+
+%\noindent \hglue 45mm {\em ``Its a mathematical fact that two negatives make
+% a positive so\\
+%\hglue 45mm even under adverse circumstances think
+% positively."}
+%\begin{flushright}
+%--- A. Abraham
+%\end{flushright}
+
+\section{Background}
+Many physical systems in real life are described in terms of mathematical models that consist of governing equations in the form of ordinary or partial differential equations (ODEs or PDEs). As a great number of such model equations do not posses analytical solutions, one has to resort to numerical methods. Amongst the most popular methods that have been used quite frequently in computational fluid dynamics (CFD), the finite difference methods are one of the oldest and the simplest. This method consist in essentially setting up a grid (preferably structured) in the problem domain, discretizing the governing equations with respect to the grid and solving them numerically. The discretization is based on Taylor series expansion of the variables at the grid points. The leading term in the truncation error (TE) of this expansion determines the order of accuracy of the method.
+%Neither a lower order accurate method nor a higher order with a large grid stencil could be computationally cost effective.
+In most practical CFD problems, the solution structures are so complicated and their time evolution is so long that it is very difficult to obtain an acceptable solution with today's computing needs using larger grid stencils and lower order accurate methods. Therefore, there is a need for the development of schemes which are higher order accurate and also use minimum grid stencils at the same time.
+%There exists several mechanisms \cite{mackinnon1991, spotz1995} through which finite difference approximations can achieve higher order accuracy.
+One way of obtaining higher order accuracy is by using the original differential equation to substitute for the leading truncation error terms of the standard central difference approximation. This mechanism was adopted and developed in the name of higher order compact (HOC) finite difference scheme by Kalita et el. \cite{kalita2002, kalita2004} in 2002. It is a compact finite difference scheme as it utilizes grid points located only directly adjacent to the node about which differences are taken. In addition, the scheme has an order of accuracy  greater than two.
+
+\noindent Since, the Taylor series expansion, which provides the platforms for such approximations, is not valid for non smooth functions, finite difference approximations fail to yield correct numerical solutions. Many applications lead to non smooth functions, for example while computing multiphase flows and multi-physics problems with interfaces (the location of abrupt changes in material properties). Such problems arise in numerous branches of science and engineering, biochemical processing, free surface flow, drop deformation, solid mechanics, porous media flow, formation of gas bubbles in liquid, mining etc. Moreover, in problems involving dissimilar materials, at the interfaces, the material properties (elastic moduli, permeability, conductivity, etc) are discontinuous. Mathematically, such problems usually lead to differential equations whose input data and solutions have discontinuities or non-smoothness across some interface.
+\section{Organization of the Thesis}
+The work embodied in this thesis is divided into six chapters.
+
+\textbf{Chapter 2} discusses the implementation of higher order compact (HOC) scheme to study the laminar, incompressible, viscous flow past a circular cylinder subject to rotational oscillations.
+
+In \textbf{Chapter 3}, a new modified finite difference scheme in developed in polar coordinates, in conjunction to the HOC scheme, to solve partial differential equations with discontinuous coefficients and singular source terms. The scheme is validated by solving elliptic equations with known analytical solutions followed by its application to flow past a cylinder. This approach considers the surface of the cylinder as an interface immersed in the fluid.
+
+\textbf{Chapter 4} discusses the development of a new finite difference scheme in cartesian coordinates to tackle discontinuities arising from complex immersed interfaces. Numerical tests are carried out to validate the scheme for solving elliptic equations in two and three dimensions followed by its application it to two dimensional Stokes flows. In \noindent \textbf{Chapter 5}, this idea is extended to solve moving interface problems. Non linear partial differential equations are solved in 1D and 2D with discontinuities across a time dependent interface.
+
+Finally, the thesis is summarized and concluded with the probable areas that could be taken up in future in \textbf{Chapter 6}.
+
+The relevant references are appended at the end.
+
+\clearpage
